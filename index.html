@@ -161,7 +161,7 @@ button.stitle{font-family:var(--sans);color:var(--red);background:none;border:no
 
 /* ---------------- venue ---------------- */
 .mapbox{border:2px solid var(--red);background:var(--lime);margin:14px 0 4px;}
-.mapbox svg{display:block;width:100%;height:auto;}
+.mapbox iframe{display:block;width:100%;height:270px;}
 .venue{display:flex;gap:12px;padding:16px 0;}
 .venue .num{flex:0 0 28px;height:28px;border:2px solid var(--red);border-radius:100px;display:flex;align-items:center;justify-content:center;font-family:var(--sans-latin);font-weight:800;font-size:12.5px;}
 .venue .v-name{font-weight:900;font-size:16.5px;line-height:1.3;}
@@ -320,19 +320,9 @@ button.stitle{font-family:var(--sans);color:var(--red);background:none;border:no
       <div class="pagetitle"><span class="only-ko">장소</span><span class="only-en">Venues</span></div>
 
       <div class="mapbox">
-        <svg viewBox="0 0 480 270" aria-hidden="true">
-          <g stroke="#fb2b06" stroke-width="1.6" fill="none" stroke-dasharray="3 5" stroke-linecap="round">
-            <path d="M120 118 Q198 78 250 116"/><path d="M262 116 Q322 142 356 106"/><path d="M116 126 Q106 172 164 192"/><path d="M362 114 Q400 158 350 194"/>
-          </g>
-          <g stroke="#fb2b06" stroke-width="2" font-family="'Noto Sans KR',sans-serif" font-weight="800">
-            <g><ellipse cx="118" cy="118" rx="30" ry="9" fill="#f4511e"/><text x="118" y="96" text-anchor="middle" fill="#fb2b06" font-size="12" stroke="none">YPC SPACE</text></g>
-            <g><ellipse cx="255" cy="117" rx="24" ry="9" fill="#00bcd4"/><text x="255" y="96" text-anchor="middle" fill="#fb2b06" font-size="12" stroke="none">PCO</text></g>
-            <g><ellipse cx="362" cy="106" rx="26" ry="9" fill="#ffd200"/><text x="362" y="85" text-anchor="middle" fill="#fb2b06" font-size="12" stroke="none">FF Seoul</text></g>
-            <g><ellipse cx="166" cy="196" rx="24" ry="9" fill="#7cb342"/><text x="166" y="220" text-anchor="middle" fill="#fb2b06" font-size="11" stroke="none">전망</text></g>
-            <g><ellipse cx="348" cy="198" rx="30" ry="9" fill="#4dd0b1"/><text x="348" y="222" text-anchor="middle" fill="#fb2b06" font-size="11" stroke="none">충무 · 동국대</text></g>
-          </g>
-          <text x="20" y="36" font-family="'Noto Sans',sans-serif" font-style="italic" font-weight="800" font-size="15" fill="#fb2b06">Islands and Bridges — Seoul</text>
-        </svg>
+        <iframe src="https://www.google.com/maps?q=%EC%84%9C%EC%9A%B8%20%EC%A4%91%EA%B5%AC%20%ED%87%B4%EA%B3%84%EB%A1%9C%20258&z=15&output=embed"
+                loading="lazy" referrerpolicy="no-referrer-when-downgrade"
+                title="Summer Camp venues — Chungmuro, Seoul"></iframe>
       </div>
 
       <div class="rule rule-pin" style="margin-top:16px;"></div>
