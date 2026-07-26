@@ -151,11 +151,12 @@ button.stitle{font-family:var(--sans);color:var(--red);background:none;border:no
 .d-sec{text-align:center;font-weight:900;font-size:14px;padding:10px 4px;}
 /* descriptions may contain \n for paragraph breaks */
 .d-text{font-size:14px;line-height:1.85;font-weight:500;white-space:pre-line;padding:6px 0 16px;}
-.applybtn{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:22px;
+.applybtn{display:flex;align-items:center;justify-content:center;gap:8px;width:fit-content;margin:22px auto 0;
   background:var(--red);color:var(--lime);border:2px solid var(--red);border-radius:100px;
   font-family:var(--sans);font-weight:800;font-size:15px;text-decoration:none;padding:13px 20px;}
 .applybtn:hover{background:var(--lime);color:var(--red);}
-.walkinbtn{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:22px;
+.applybtn:disabled{opacity:.4;cursor:default;background:var(--red);color:var(--lime);}
+.walkinbtn{display:flex;align-items:center;justify-content:center;gap:8px;width:fit-content;margin:22px auto 0;
   background:transparent;color:var(--red);border:2px solid var(--red);border-radius:100px;
   font-family:var(--sans);font-weight:800;font-size:15px;text-align:center;padding:13px 20px;}
 .d-nav{display:flex;gap:8px;margin-top:22px;}
@@ -214,6 +215,7 @@ button.stitle{font-family:var(--sans);color:var(--red);background:none;border:no
       <button class="pill" data-nav="schedule" onclick="go('schedule')"><span class="only-ko">일정</span><span class="only-en">Schedule</span></button>
       <button class="pill" data-nav="program" onclick="go('program')"><span class="only-ko">프로그램</span><span class="only-en">Program</span></button>
       <button class="pill" data-nav="venue" onclick="go('venue')"><span class="only-ko">장소</span><span class="only-en">Venue</span></button>
+      <button class="pill" data-nav="info" onclick="go('info')"><span class="only-ko">안내</span><span class="only-en">Info</span></button>
     </nav>
     <div class="rule rule-bigdot" style="margin:0 7px;"></div>
   </div>
@@ -281,8 +283,8 @@ button.stitle{font-family:var(--sans);color:var(--red);background:none;border:no
 
       <div class="supportbox">
         <p class="notesmall"><span class="only-ko">*모든 프로그램은 무료로 진행합니다.</span><span class="only-en">*All programs are free and open to everyone.</span></p>
-        <p class="notesmall"><span class="only-ko">*보내주시는 자율 후원은 서머 캠프를 무료로 진행하는 데 큰 힘이 됩니다. (후원 계좌: 카카오 7979-09-90537 ㄱㅈㅎ)</span><span class="only-en">*Voluntary contributions help us keep Summer Camp free and accessible to all. Contributions: KakaoBank 7979-09-90537 (Account holder: ㄱㅈㅎ)</span></p>
-        <button class="applybtn" type="button" onclick="go('donors')"><span class="only-ko">후원하러 가기</span><span class="only-en">Support Us</span></button>
+        <p class="notesmall"><span class="only-ko">*보내주시는 자율 후원은 서머 캠프를 무료로 진행하는 데 큰 힘이 됩니다.</span><span class="only-en">*Voluntary contributions help us keep Summer Camp free and accessible to all.</span></p>
+        <button class="applybtn" type="button" onclick="go('donors')"><span class="only-ko">후원하기</span><span class="only-en">Support Us</span></button>
       </div>
 
       <div class="foot">
@@ -346,6 +348,38 @@ button.stitle{font-family:var(--sans);color:var(--red);background:none;border:no
       <div class="foot">
         <div class="mk"><span class="only-ko">섬과 다리</span><span class="only-en">Islands and Bridges</span></div>
         <div class="dt">2026. 8. 6. – 8. 9. · Seoul</div>
+        <div class="host">by Yellow Pen Club</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ INFO ============ -->
+  <section id="view-info" class="view" data-view="info">
+    <div class="sheet">
+      <div class="pagetitle"><span class="only-ko">안내</span><span class="only-en">Info</span></div>
+
+      <div class="rule rule-dashdot"></div>
+
+      <div class="sectlabel"><span class="only-ko">참여 안내</span><span class="only-en">Participation</span></div>
+      <div class="rule rule-linedot"></div>
+      <p class="para"><span class="only-ko">모든 프로그램은 각 장소에서 현장 운영됩니다. “온라인 방송”이 표시된 일부 프로그램은 현장 운영과 온라인 방송을 동시에 진행합니다.</span><span class="only-en">All programmes run on-site at their venues. Programmes marked “Live stream” run simultaneously on-site and online.</span></p>
+      <button class="applybtn" type="button" disabled><span class="only-ko">온라인 방송 접속 (링크 준비 중)</span><span class="only-en">Watch Online (link coming soon)</span></button>
+
+      <div class="rule rule-pin" style="margin-top:20px;"></div>
+      <div class="sectlabel"><span class="only-ko">신청 안내</span><span class="only-en">Registration</span></div>
+      <div class="rule rule-linedot"></div>
+      <p class="para"><span class="only-ko">일부 프로그램은 사전 신청 후 참여하실 수 있습니다.</span><span class="only-en">Some programmes require registration in advance.</span></p>
+      <a class="applybtn" href="https://forms.gle/wctKcN6SJd5bpRVR9" target="_blank" rel="noopener"><span class="only-ko">프로그램 신청하기</span><span class="only-en">Register for a Program</span></a>
+
+      <div class="rule rule-pin" style="margin-top:20px;"></div>
+      <div class="sectlabel"><span class="only-ko">후원 안내</span><span class="only-en">Support</span></div>
+      <div class="rule rule-linedot"></div>
+      <p class="para"><span class="only-ko">서머캠프의 모든 프로그램은 무료로 진행됩니다. 서머캠프가 지속될 수 있도록 후원을 받고 있습니다.</span><span class="only-en">All Summer Camp programmes are free. Your support helps Summer Camp continue.</span></p>
+      <button class="applybtn" type="button" onclick="go('donors')"><span class="only-ko">후원하기</span><span class="only-en">Support Us</span></button>
+
+      <div class="foot">
+        <div class="mk"><span class="only-ko">섬과 다리</span><span class="only-en">Islands and Bridges</span></div>
+        <div class="dt">2026. 8. 6. – 8. 9.</div>
         <div class="host">by Yellow Pen Club</div>
       </div>
     </div>
@@ -433,7 +467,7 @@ window.addEventListener('DOMContentLoaded',()=>{
   setLang('ko');
   const h=location.hash.replace('#','');
   if(h.startsWith('p-')) goProgram(h.slice(2));
-  else if(['about','schedule','program','venue','donors'].includes(h)) go(h);
+  else if(['about','schedule','program','venue','info','donors'].includes(h)) go(h);
 });
 
 /* ---------------- SCHEDULE ---------------- */
