@@ -171,7 +171,6 @@ button.stitle{font-family:var(--sans);color:var(--red);background:none;border:no
 .v-actions{display:flex;gap:7px;margin-top:12px;flex-wrap:wrap;}
 .mapbtn{display:inline-flex;align-items:center;gap:5px;text-decoration:none;font-family:var(--sans);font-weight:700;font-size:12px;padding:6px 13px;border:2px solid var(--red);border-radius:100px;color:var(--red);}
 .mapbtn:hover{background:var(--red);color:var(--lime);}
-.mapbtn svg{width:11px;height:11px;}
 
 /* ---------------- footer ---------------- */
 .foot{text-align:center;padding:26px 0 6px;}
@@ -337,8 +336,6 @@ button.stitle{font-family:var(--sans);color:var(--red);background:none;border:no
       </div>
 
       <div class="rule rule-pin" style="margin-top:16px;"></div>
-      <div class="sectlabel"><span class="only-ko">목록</span><span class="only-en">List</span></div>
-      <div class="rule rule-linedot"></div>
       <div id="venuelist"></div>
 
       <div class="rule rule-pin" style="margin-top:8px;"></div>
@@ -626,7 +623,7 @@ function renderDetail(){
 function mapLinks(q){
   const e=encodeURIComponent(q);
   return `<div class="v-actions">
-    <a class="mapbtn" target="_blank" rel="noopener" href="https://map.naver.com/p/search/${e}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 21s7-6.5 7-12a7 7 0 10-14 0c0 5.5 7 12 7 12z"/><circle cx="12" cy="9" r="2.5"/></svg>${lang==='ko'?'네이버 지도':'Naver Map'}</a>
+    <a class="mapbtn" target="_blank" rel="noopener" href="https://map.naver.com/p/search/${e}">${lang==='ko'?'네이버 지도':'Naver Map'}</a>
     <a class="mapbtn" target="_blank" rel="noopener" href="https://map.kakao.com/?q=${e}">${lang==='ko'?'카카오맵':'KakaoMap'}</a>
     <a class="mapbtn" target="_blank" rel="noopener" href="https://www.google.com/maps/search/?api=1&query=${e}">Google Maps</a>
   </div>`;
@@ -656,7 +653,6 @@ function renderVenues(){
     el.innerHTML=`<div class="num">${i+1}</div>
       <div style="flex:1">
         <div class="v-name">${t(v.name)}</div>
-        <div class="v-role">${t(v.role)}</div>
         <div class="v-addr">${t(v.addr)}</div>
         <div class="v-hours">${t(v.hours)}</div>
         ${mapLinks(v.q)}
