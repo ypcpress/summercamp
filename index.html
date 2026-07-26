@@ -155,7 +155,7 @@ button.stitle{font-family:var(--sans);color:var(--red);background:none;border:no
 .d-nav button:hover{background:var(--red);color:var(--lime);}
 .d-nav button:disabled{opacity:.3;cursor:default;}
 .d-nav button:disabled:hover{background:transparent;color:var(--red);}
-.d-nav .lbl{display:block;font-family:var(--sans-latin);font-style:italic;font-size:11px;opacity:.75;margin-bottom:3px;}
+.d-nav .lbl{display:block;font-family:var(--sans-latin);font-size:11px;opacity:.75;margin-bottom:3px;}
 .d-nav .nx{text-align:right;}
 
 /* ---------------- venue ---------------- */
@@ -507,10 +507,10 @@ const progGroups=[
   {cat:'오프닝',ko:'오프닝',en:'Opening'},
   {cat:'투어',ko:'투어',en:'Tour'},
   {cat:'전시',ko:'전시',en:'Exhibition'},
+  {cat:'스크리닝',ko:'스크리닝',en:'Screening'},
   {cat:'나눔',ko:'나눔',en:'Sharing'},
   {cat:'낭독',ko:'낭독',en:'Reading'},
   {cat:'워크숍',ko:'워크숍',en:'Workshop'},
-  {cat:'스크리닝',ko:'스크리닝',en:'Screening'},
   {cat:'퍼포먼스',ko:'퍼포먼스',en:'Performance'},
   {cat:'뒤풀이',ko:'뒤풀이',en:'Gathering'},
 ];
@@ -570,8 +570,8 @@ function renderDetail(){
   const g=progGroups.find(x=>x.cat===p.cat);
   const meta=[t(p.place), t(p.when)].filter(Boolean);
   const hdr=lang==='ko'
-    ? {back:'프로그램 목록',d:'프로그램 소개',a:'참여작가',r:'연계 프로그램',prev:'이전',next:'다음',apply:'신청하기'}
-    : {back:'All programs',d:'About',a:'Artist',r:'Related program',prev:'Previous',next:'Next',apply:'Apply'};
+    ? {back:'프로그램 목록',d:'프로그램 소개',a:'참여작가',r:'연계 프로그램',apply:'신청하기'}
+    : {back:'All programs',d:'About',a:'Artist',r:'Related program',apply:'Apply'};
 
   let html=`
     <button class="backbtn" onclick="go('program')">← ${hdr.back}</button>
@@ -594,10 +594,10 @@ function renderDetail(){
 
   html+=`<div class="d-nav">
       <button ${prev?`onclick="goProgram('${prev.id}')"`:'disabled'}>
-        <span class="lbl">← ${hdr.prev}</span>${prev?t(prev.title):'—'}
+        <span class="lbl">←</span>${prev?t(prev.title):'—'}
       </button>
       <button class="nx" ${next?`onclick="goProgram('${next.id}')"`:'disabled'}>
-        <span class="lbl">${hdr.next} →</span>${next?t(next.title):'—'}
+        <span class="lbl">→</span>${next?t(next.title):'—'}
       </button>
     </div>
     <div class="foot">
