@@ -112,7 +112,6 @@ body.lang-en .only-ko{display:none;}
 .srow .scat{font-weight:900;font-size:14px;}
 .srow .stitle{font-weight:900;font-size:15.5px;line-height:1.4;margin-top:1px;}
 button.stitle{font-family:var(--sans);color:var(--red);background:none;border:none;padding:0;text-align:left;cursor:pointer;display:inline-block;text-decoration:underline;text-decoration-thickness:1.5px;text-underline-offset:3px;}
-.srow .sarrow{font-family:var(--sans-latin);font-weight:800;font-size:12px;margin-left:4px;text-decoration:none;display:inline-block;}
 .srow .smeta{font-weight:700;font-size:13px;margin-top:7px;line-height:1.5;opacity:.95;}
 .srow .sbadge{margin-top:8px;}
 
@@ -286,7 +285,7 @@ button.stitle{font-family:var(--sans);color:var(--red);background:none;border:no
   <!-- ============ SCHEDULE ============ -->
   <section id="view-schedule" class="view" data-view="schedule">
     <div class="sheet">
-      <div class="pagetitle"><span class="only-ko">일정표</span><span class="only-en">Schedule</span></div>
+      <div class="pagetitle"><span class="only-ko">일정</span><span class="only-en">Schedule</span></div>
       <div id="schedule-body"></div>
       <div class="foot">
         <div class="mk"><span class="only-ko">섬과 다리</span><span class="only-en">Islands and Bridges</span></div>
@@ -436,7 +435,7 @@ function renderSchedule(){
       if(i>0) html+=`<div class="rule rule-fine"></div>`;
       const badge=it.live?`<div class="sbadge"><span class="live-badge"><span class="dot"></span>${lang==='ko'?'온라인 방송':'Live stream'}</span></div>`:'';
       const title=it.ref
-        ? `<button class="stitle" onclick="goProgram('${it.ref}')">${t(it.ti)}<span class="sarrow">↗</span></button>`
+        ? `<button class="stitle" onclick="goProgram('${it.ref}')">${t(it.ti)}</button>`
         : `<div class="stitle">${t(it.ti)}</div>`;
       html+=`<div class="srow">
         <div class="stime">${it.t}</div>
