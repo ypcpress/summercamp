@@ -95,6 +95,9 @@ body.lang-en .only-ko{display:none;}
 .para{font-size:14px;line-height:1.8;font-weight:500;margin:13px 0;}
 .sectlabel{text-align:center;font-weight:900;font-size:15px;padding:10px 4px;}
 .notesmall{font-size:12.5px;line-height:1.65;font-weight:700;margin:9px 0;}
+.copybtn{display:inline-flex;align-items:center;gap:4px;margin-left:6px;border:2px solid var(--red);background:transparent;color:var(--red);border-radius:100px;font-family:var(--sans);font-weight:700;font-size:11px;padding:3px 10px;cursor:pointer;vertical-align:middle;white-space:nowrap;}
+.copybtn:hover{background:var(--red);color:var(--lime);}
+.copybtn.copied{background:var(--red);color:var(--lime);}
 .supportbox{border:2px solid var(--red);border-radius:14px;padding:14px 16px;margin:14px 0 4px;}
 .supportbox .notesmall{margin:5px 0;}
 .factrow{display:flex;gap:12px;padding:10px 0;}
@@ -279,7 +282,7 @@ button.stitle{font-family:var(--sans);color:var(--red);background:none;border:no
 
       <div class="supportbox">
         <p class="notesmall"><span class="only-ko">*모든 프로그램은 무료로 진행합니다.</span><span class="only-en">*All programs are free and open to everyone.</span></p>
-        <p class="notesmall"><span class="only-ko">*보내주시는 자율 후원은 서머 캠프를 무료로 진행하는 데 큰 힘이 됩니다. (후원 계좌: 카카오 7979-09-90537 ㄱㅈㅎ)</span><span class="only-en">*Voluntary contributions help us keep Summer Camp free and accessible to all. Contributions: KakaoBank 7979-09-90537 (Account holder: ㄱㅈㅎ)</span></p>
+        <p class="notesmall"><span class="only-ko">*보내주시는 자율 후원은 서머 캠프를 무료로 진행하는 데 큰 힘이 됩니다. (후원 계좌: 카카오 7979-09-90537 ㄱㅈㅎ)</span><span class="only-en">*Voluntary contributions help us keep Summer Camp free and accessible to all. Contributions: KakaoBank 7979-09-90537 (Account holder: ㄱㅈㅎ)</span><button class="copybtn" type="button" onclick="copyAccount(this)"><span class="only-ko">계좌번호 복사</span><span class="only-en">Copy account</span></button></p>
       </div>
 
       <div class="foot">
@@ -355,6 +358,30 @@ button.stitle{font-family:var(--sans);color:var(--red);background:none;border:no
 /* ---------------- language ---------------- */
 let lang='ko';
 function t(o){ return (o && typeof o==='object' && 'ko' in o) ? (o[lang] ?? o.ko) : o; }
+
+/* ---------------- copy account number ---------------- */
+function copyAccount(btn){
+  const text='7979-09-90537';
+  const original=btn.innerHTML;
+  const showCopied=()=>{
+    btn.textContent=lang==='ko'?'복사됨':'Copied';
+    btn.classList.add('copied');
+    setTimeout(()=>{ btn.innerHTML=original; btn.classList.remove('copied'); },1500);
+  };
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(showCopied).catch(()=>fallbackCopy(text,showCopied));
+  } else {
+    fallbackCopy(text,showCopied);
+  }
+}
+function fallbackCopy(text,cb){
+  const ta=document.createElement('textarea');
+  ta.value=text; ta.style.position='fixed'; ta.style.opacity='0';
+  document.body.appendChild(ta); ta.select();
+  try{ document.execCommand('copy'); }catch(e){}
+  document.body.removeChild(ta);
+  cb();
+}
 function setLang(l){
   lang=l;
   document.body.classList.toggle('lang-ko', l==='ko');
