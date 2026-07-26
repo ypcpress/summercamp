@@ -98,7 +98,6 @@ body.lang-en .only-ko{display:none;}
 .factrow .k{flex:0 0 84px;font-family:var(--sans-latin);font-weight:700;font-size:12px;opacity:.8;padding-top:2px;}
 .factrow .v{flex:1;font-size:14px;font-weight:700;}
 .factrow .v i{font-family:var(--sans-latin);font-weight:500;opacity:.8;}
-.footnote{text-align:right;font-weight:700;font-size:12px;padding:9px 0 2px;display:flex;align-items:center;justify-content:flex-end;gap:7px;flex-wrap:wrap;}
 .linky{text-decoration:underline;text-underline-offset:3px;cursor:pointer;font-weight:900;}
 
 /* live badge */
@@ -463,10 +462,7 @@ function renderSchedule(){
         </div>
       </div>`;
     });
-    html+=`<div class="rule ${day.endRule}"></div>
-      <div class="footnote">
-        <span class="live-badge"><span class="dot"></span>${lang==='ko'?'온라인 방송':'Live stream'}</span>
-      </div>`;
+    html+=`<div class="rule ${day.endRule}"></div>`;
     box.insertAdjacentHTML('beforeend', html);
   });
 }
