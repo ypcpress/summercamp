@@ -97,6 +97,8 @@ body.lang-en .only-ko{display:none;}
 .notesmall{font-size:12.5px;line-height:1.65;font-weight:700;margin:9px 0;}
 .supportbox{border:2px solid var(--red);border-radius:14px;padding:14px 16px;margin:14px 0 4px;}
 .supportbox .notesmall{margin:5px 0;}
+.donorlist{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 4px;}
+.donorchip{border:2px solid var(--red);border-radius:100px;padding:5px 14px;font-weight:700;font-size:13px;}
 .factrow{display:flex;gap:12px;padding:10px 0;}
 .factrow .k{flex:0 0 84px;font-family:var(--sans-latin);font-weight:700;font-size:12px;opacity:.8;padding-top:2px;}
 .factrow .v{flex:1;font-size:14px;font-weight:700;}
@@ -280,6 +282,7 @@ button.stitle{font-family:var(--sans);color:var(--red);background:none;border:no
       <div class="supportbox">
         <p class="notesmall"><span class="only-ko">*모든 프로그램은 무료로 진행합니다.</span><span class="only-en">*All programs are free and open to everyone.</span></p>
         <p class="notesmall"><span class="only-ko">*보내주시는 자율 후원은 서머 캠프를 무료로 진행하는 데 큰 힘이 됩니다. (후원 계좌: 카카오 7979-09-90537 ㄱㅈㅎ)</span><span class="only-en">*Voluntary contributions help us keep Summer Camp free and accessible to all. Contributions: KakaoBank 7979-09-90537 (Account holder: ㄱㅈㅎ)</span></p>
+        <button class="applybtn" type="button" onclick="go('donors')"><span class="only-ko">후원하러 가기</span><span class="only-en">Support Us</span></button>
       </div>
 
       <div class="foot">
@@ -348,6 +351,34 @@ button.stitle{font-family:var(--sans);color:var(--red);background:none;border:no
     </div>
   </section>
 
+  <!-- ============ DONORS ============ -->
+  <section id="view-donors" class="view" data-view="donors">
+    <div class="sheet">
+      <button class="backbtn" onclick="go('about')">← <span class="only-ko">소개로</span><span class="only-en">Back to About</span></button>
+      <div class="pagetitle"><span class="only-ko">후원자 명단</span><span class="only-en">Donors</span></div>
+
+      <div class="rule rule-dashdot"></div>
+
+      <p class="para"><span class="only-ko">서머 캠프는 여러분의 자율 후원 덕분에 모든 프로그램을 무료로 운영합니다. 보내주신 마음에 감사드리며, 이름을 남겨주신 분들을 소개합니다.</span><span class="only-en">Summer Camp keeps every programme free thanks to voluntary contributions. Thank you for your support — those who shared their name are listed below.</span></p>
+
+      <div class="supportbox">
+        <p class="notesmall"><span class="only-ko">후원 계좌: 카카오 7979-09-90537 ㄱㅈㅎ</span><span class="only-en">Contributions: KakaoBank 7979-09-90537 (Account holder: ㄱㅈㅎ)</span></p>
+      </div>
+
+      <div class="rule rule-pin" style="margin-top:14px;"></div>
+      <div class="sectlabel"><span class="only-ko">후원자 명단</span><span class="only-en">Donor List</span></div>
+      <div class="rule rule-linedot"></div>
+
+      <div id="donorlist"></div>
+
+      <div class="foot">
+        <div class="mk"><span class="only-ko">섬과 다리</span><span class="only-en">Islands and Bridges</span></div>
+        <div class="dt">2026. 8. 6. – 8. 9.</div>
+        <div class="host">by Yellow Pen Club</div>
+      </div>
+    </div>
+  </section>
+
   <button class="totop" id="totop" aria-label="맨 위로 / To top"><svg viewBox="0 0 24 24"><polyline points="6 15 12 9 18 15"/></svg></button>
 </div>
 
@@ -361,7 +392,7 @@ function setLang(l){
   document.body.classList.toggle('lang-en', l==='en');
   document.documentElement.lang=l;
   document.querySelectorAll('.lg').forEach(b=>b.classList.toggle('active', b.dataset.lang===l));
-  renderSchedule(); renderPrograms(); renderVenues();
+  renderSchedule(); renderPrograms(); renderVenues(); renderDonors();
   if(currentProgram) renderDetail();
 }
 
@@ -402,7 +433,7 @@ window.addEventListener('DOMContentLoaded',()=>{
   setLang('ko');
   const h=location.hash.replace('#','');
   if(h.startsWith('p-')) goProgram(h.slice(2));
-  else if(['about','schedule','program','venue'].includes(h)) go(h);
+  else if(['about','schedule','program','venue','donors'].includes(h)) go(h);
 });
 
 /* ---------------- SCHEDULE ---------------- */
@@ -673,6 +704,22 @@ function renderVenues(){
       </div>`;
     xl.appendChild(el);
   });
+}
+
+/* ---------------- DONORS ---------------- */
+const donors=[
+  /* add names here as voluntary contributions come in, e.g. {name:{ko:'홍길동',en:'Hong Gildong'}} */
+];
+function renderDonors(){
+  const dl=document.getElementById('donorlist');
+  if(!dl) return;
+  if(!donors.length){
+    dl.className='';
+    dl.innerHTML=`<p class="para">${lang==='ko'?'아직 이름을 남겨주신 후원자가 없습니다. 첫 번째 후원자가 되어주세요!':'No donors have shared their name yet — be the first!'}</p>`;
+    return;
+  }
+  dl.className='donorlist';
+  dl.innerHTML=donors.map(d=>`<span class="donorchip">${t(d.name)}</span>`).join('');
 }
 </script>
 </body>
