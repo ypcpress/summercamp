@@ -153,6 +153,9 @@ button.stitle{font-family:var(--sans);color:var(--red);background:none;border:no
   background:var(--red);color:var(--lime);border:2px solid var(--red);border-radius:100px;
   font-family:var(--sans);font-weight:800;font-size:15px;text-decoration:none;padding:13px 20px;}
 .applybtn:hover{background:var(--lime);color:var(--red);}
+.walkinbtn{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:22px;
+  background:transparent;color:var(--red);border:2px solid var(--red);border-radius:100px;
+  font-family:var(--sans);font-weight:800;font-size:15px;text-align:center;padding:13px 20px;}
 .d-nav{display:flex;gap:8px;margin-top:22px;}
 .d-nav button{flex:1;border:2px solid var(--red);background:transparent;color:var(--red);border-radius:14px;
   font-family:var(--sans);font-weight:700;font-size:13px;padding:12px 10px;cursor:pointer;text-align:left;line-height:1.35;}
@@ -575,8 +578,8 @@ function renderDetail(){
   const g=progGroups.find(x=>x.cat===p.cat);
   const meta=[t(p.place), t(p.when)].filter(Boolean);
   const hdr=lang==='ko'
-    ? {back:'프로그램 목록',d:'프로그램 소개',a:'참여작가',r:'연계 프로그램',apply:'신청하기'}
-    : {back:'All programs',d:'About',a:'Artist',r:'Related program',apply:'Apply'};
+    ? {back:'프로그램 목록',d:'프로그램 소개',a:'참여작가',r:'연계 프로그램',apply:'신청하기',walkin:'별도의 신청 없이 현장 참여가 가능합니다'}
+    : {back:'All programs',d:'About',a:'Artist',r:'Related program',apply:'Registration',walkin:'No registration required — walk-in participation welcome'};
 
   let html=`
     <button class="backbtn" onclick="go('program')">← ${hdr.back}</button>
@@ -596,6 +599,7 @@ function renderDetail(){
   if(p.linked) html+=section(hdr.r, t(p.linked));
 
   if(p.apply) html+=`<a class="applybtn" href="${APPLY_FORM_URL}" target="_blank" rel="noopener">${hdr.apply} ↗</a>`;
+  else if(['낭독','퍼포먼스','뒤풀이'].includes(p.cat)) html+=`<div class="walkinbtn">${hdr.walkin}</div>`;
 
   html+=`<div class="d-nav">
       <button ${prev?`onclick="goProgram('${prev.id}')"`:'disabled'}>
