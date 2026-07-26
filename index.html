@@ -57,7 +57,11 @@ body.lang-en .only-ko{display:none;}
 
 /* ---------------- fixed header ---------------- */
 .appheader{position:fixed;top:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;z-index:60;background:var(--paper);}
-@media(min-width:520px){.appheader{top:20px;}}
+.topmask{display:none;}
+@media(min-width:520px){
+  .appheader{top:20px;}
+  .topmask{display:block;position:fixed;top:0;left:0;right:0;height:20px;background:var(--paper);z-index:61;}
+}
 .topbar{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 16px 9px;}
 .brand{display:flex;flex-direction:column;line-height:1.15;cursor:pointer;}
 .brand b{font-weight:900;font-size:14px;letter-spacing:-.01em;}
@@ -185,6 +189,7 @@ button.stitle{font-family:var(--sans);color:var(--red);background:none;border:no
 </style>
 </head>
 <body class="lang-ko">
+<div class="topmask"></div>
 <div id="app">
 
   <!-- ============ HEADER ============ -->
