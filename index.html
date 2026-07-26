@@ -696,22 +696,23 @@ function renderDetail(){
 }
 
 /* ---------------- VENUES ---------------- */
-function mapLinks(q,naverUrl){
+function mapLinks(q,naverUrl,kakaoUrl){
   const e=encodeURIComponent(q);
   const naver=naverUrl||`https://map.naver.com/p/search/${e}`;
+  const kakao=kakaoUrl||`https://map.kakao.com/?q=${e}`;
   return `<div class="v-actions">
     <a class="mapbtn" target="_blank" rel="noopener" href="${naver}">${lang==='ko'?'네이버 지도':'Naver Map'}</a>
-    <a class="mapbtn" target="_blank" rel="noopener" href="https://map.kakao.com/?q=${e}">${lang==='ko'?'카카오맵':'KakaoMap'}</a>
+    <a class="mapbtn" target="_blank" rel="noopener" href="${kakao}">${lang==='ko'?'카카오맵':'KakaoMap'}</a>
     <a class="mapbtn" target="_blank" rel="noopener" href="https://www.google.com/maps/search/?api=1&query=${e}">Google Maps</a>
   </div>`;
 }
 const venues=[
-  {name:'YPC SPACE',role:{ko:'베이스캠프 · 오프닝 · 나눔 · 낭독 · 워크숍 · 퍼포먼스 · 토크 · 뒤풀이',en:'Base camp · Opening · Sharing · Reading · Workshop · Performance · Talk'},addr:{ko:'서울 중구 퇴계로 258, 4층',en:'4F, 258 Toegye-ro, Jung-gu, Seoul'},hours:{ko:'전시 · 목–금 14–19시 / 토–일 11–19시',en:'Exhibition · Thu–Fri 2–7pm / Sat–Sun 11am–7pm'},q:'서울 중구 퇴계로 258',naver:'https://naver.me/5Kbi3Wwz'},
-  {name:'PCO',role:{ko:'전시 〈관문〉 · 워크숍 · 토크',en:'Exhibition “Gateways” · Workshop · Talk'},addr:{ko:'서울 중구 서애로 15-6',en:'15-6 Seoae-ro, Jung-gu, Seoul'},hours:{ko:'전시 · 매일 12–19시',en:'Exhibition · Daily 12–7pm'},q:'서울 중구 서애로 15-6',naver:'https://naver.me/5CW0a6ju'},
-  {name:'FF Seoul',role:{ko:'전시 〈파이프 릴레이〉',en:'Exhibition “Pipe-relay”'},addr:{ko:'서울 종로구 청계천로 159, 세운상가 가동 바열 325호',en:'Sewoon Plaza Ga-dong #325, 159 Cheonggyecheon-ro, Jongno-gu, Seoul'},hours:{ko:'전시 · 목–토 11–19시 / 일 11–18시',en:'Exhibition · Thu–Sat 11am–7pm / Sun 11am–6pm'},q:'서울 종로구 청계천로 159 세운상가',naver:'https://naver.me/FN7dlUNy'},
-  {name:{ko:'전망',en:'Sionmang'},role:{ko:'전시 〈돌연, 눈앞이 열리고…〉',en:'Exhibition “Suddenly, the view…”'},addr:{ko:'서울 중구 동호로34길 8-9, 3층',en:'3F, 8-9 Dongho-ro 34-gil, Jung-gu, Seoul'},hours:{ko:'전시 · 매일 12–19시',en:'Exhibition · Daily 12–7pm'},q:'서울 중구 동호로34길 8-9',naver:'https://naver.me/GgUOMXC3'},
-  {name:{ko:'충무아트센터 씨네마',en:'Chungmu Arts Center Cinema'},role:{ko:'스크리닝 〈많은 방과 흔적의 지도〉',en:'Screening “A Collection of Traces”'},addr:{ko:'서울 중구 충무아트센터',en:'Chungmu Arts Center, Jung-gu, Seoul'},hours:{ko:'8.7.(금) 18:00–20:00',en:'Aug 7 (Fri) 18:00–20:00'},q:'충무아트센터',naver:'https://naver.me/x8tpHeCf'},
-  {name:{ko:'동국대 학림관 소강당',en:'Dongguk Univ., Haklim Hall'},role:{ko:'나눔 〈해방운동의 방법으로서의 항해〉',en:'Sharing “Sailing as a method…”'},addr:{ko:'서울 중구 필동 동국대학교 학림관',en:'Haklim Hall, Dongguk University, Pil-dong, Jung-gu, Seoul'},hours:{ko:'8.8.(토) 18:00–20:00',en:'Aug 8 (Sat) 18:00–20:00'},q:'동국대학교 학림관',naver:'https://naver.me/54LWTSci'},
+  {name:'YPC SPACE',role:{ko:'베이스캠프 · 오프닝 · 나눔 · 낭독 · 워크숍 · 퍼포먼스 · 토크 · 뒤풀이',en:'Base camp · Opening · Sharing · Reading · Workshop · Performance · Talk'},addr:{ko:'서울 중구 퇴계로 258, 4층',en:'4F, 258 Toegye-ro, Jung-gu, Seoul'},hours:{ko:'전시 · 목–금 14–19시 / 토–일 11–19시',en:'Exhibition · Thu–Fri 2–7pm / Sat–Sun 11am–7pm'},q:'서울 중구 퇴계로 258',naver:'https://naver.me/5Kbi3Wwz',kakao:'https://kko.to/fGP0dFHojF'},
+  {name:'PCO',role:{ko:'전시 〈관문〉 · 워크숍 · 토크',en:'Exhibition “Gateways” · Workshop · Talk'},addr:{ko:'서울 중구 서애로 15-6',en:'15-6 Seoae-ro, Jung-gu, Seoul'},hours:{ko:'전시 · 매일 12–19시',en:'Exhibition · Daily 12–7pm'},q:'서울 중구 서애로 15-6',naver:'https://naver.me/5CW0a6ju',kakao:'https://kko.to/SW7QHOvAai'},
+  {name:'FF Seoul',role:{ko:'전시 〈파이프 릴레이〉',en:'Exhibition “Pipe-relay”'},addr:{ko:'서울 종로구 청계천로 159, 세운상가 가동 바열 325호',en:'Sewoon Plaza Ga-dong #325, 159 Cheonggyecheon-ro, Jongno-gu, Seoul'},hours:{ko:'전시 · 목–토 11–19시 / 일 11–18시',en:'Exhibition · Thu–Sat 11am–7pm / Sun 11am–6pm'},q:'서울 종로구 청계천로 159 세운상가',naver:'https://naver.me/FN7dlUNy',kakao:'https://kko.to/cPIcSErbJm'},
+  {name:{ko:'전망',en:'Sionmang'},role:{ko:'전시 〈돌연, 눈앞이 열리고…〉',en:'Exhibition “Suddenly, the view…”'},addr:{ko:'서울 중구 동호로34길 8-9, 3층',en:'3F, 8-9 Dongho-ro 34-gil, Jung-gu, Seoul'},hours:{ko:'전시 · 매일 12–19시',en:'Exhibition · Daily 12–7pm'},q:'서울 중구 동호로34길 8-9',naver:'https://naver.me/GgUOMXC3',kakao:'https://kko.to/ZK2jOdSwIB'},
+  {name:{ko:'충무아트센터 씨네마',en:'Chungmu Arts Center Cinema'},role:{ko:'스크리닝 〈많은 방과 흔적의 지도〉',en:'Screening “A Collection of Traces”'},addr:{ko:'서울 중구 충무아트센터',en:'Chungmu Arts Center, Jung-gu, Seoul'},hours:{ko:'8.7.(금) 18:00–20:00',en:'Aug 7 (Fri) 18:00–20:00'},q:'충무아트센터',naver:'https://naver.me/x8tpHeCf',kakao:'https://kko.to/pOikkRBukV'},
+  {name:{ko:'동국대 학림관 소강당',en:'Dongguk Univ., Haklim Hall'},role:{ko:'나눔 〈해방운동의 방법으로서의 항해〉',en:'Sharing “Sailing as a method…”'},addr:{ko:'서울 중구 필동 동국대학교 학림관',en:'Haklim Hall, Dongguk University, Pil-dong, Jung-gu, Seoul'},hours:{ko:'8.8.(토) 18:00–20:00',en:'Aug 8 (Sat) 18:00–20:00'},q:'동국대학교 학림관',naver:'https://naver.me/54LWTSci',kakao:'https://kko.to/eT0_JeTP3d'},
 ];
 const exhibitions=[
   {name:{ko:'베이스 캠프',en:'Base camp'},artist:'YPC · YPC SPACE',hours:{ko:'목–금 14–19시 / 토–일 11–19시',en:'Thu–Fri 2–7pm / Sat–Sun 11am–7pm'},q:'서울 중구 퇴계로 258'},
@@ -732,7 +733,7 @@ function renderVenues(){
         <div class="v-name">${t(v.name)}</div>
         <div class="v-addr">${t(v.addr)}</div>
         <div class="v-hours">${t(v.hours)}</div>
-        ${mapLinks(v.q,v.naver)}
+        ${mapLinks(v.q,v.naver,v.kakao)}
       </div>`;
     vl.appendChild(el);
   });
