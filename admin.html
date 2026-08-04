@@ -40,11 +40,11 @@ body{font-family:var(--sans);color:var(--red);background:var(--paper);line-heigh
 .sheet{background:var(--lime);clip-path:var(--clip);padding:52px 22px 60px;min-height:560px;}
 .pagetitle{text-align:center;font-weight:900;font-size:clamp(24px,7.5vw,31px);letter-spacing:-.02em;margin-bottom:6px;}
 .para{font-size:14px;line-height:1.8;font-weight:500;margin:13px 0;}
-.sectlabel{text-align:center;font-weight:900;font-size:15px;padding:10px 4px;}
 .applybtn{display:flex;align-items:center;justify-content:center;gap:8px;width:fit-content;margin:22px auto 0;
   background:var(--red);color:var(--lime);border:2px solid var(--red);border-radius:100px;
   font-family:var(--sans);font-weight:800;font-size:15px;text-decoration:none;padding:13px 20px;cursor:pointer;}
 .applybtn:hover{background:var(--lime);color:var(--red);}
+.applybtn:disabled{opacity:.4;cursor:default;}
 .ghostbtn{display:inline-flex;align-items:center;gap:6px;border:2px solid var(--red);background:transparent;color:var(--red);
   font-family:var(--sans);font-weight:700;font-size:12.5px;border-radius:100px;padding:6px 14px;cursor:pointer;}
 .ghostbtn:hover{background:var(--red);color:var(--lime);}
@@ -58,22 +58,28 @@ body{font-family:var(--sans);color:var(--red);background:var(--paper);line-heigh
   font-weight:700;font-size:12.5px;padding:9px 6px;cursor:pointer;line-height:1.3;}
 .filterbtn.active{background:var(--red);color:var(--lime);}
 
+.pwbox{width:100%;font-family:var(--sans);font-weight:500;font-size:15px;color:var(--red);
+  background:var(--paper);border:2px solid var(--red);border-radius:10px;padding:11px 13px;text-align:center;}
+.pwbox::placeholder{color:var(--red);opacity:.42;}
+.pwbox:focus{outline:none;box-shadow:inset 0 0 0 2px var(--red);}
+
 .post{padding:18px 0;}
 .shots{display:grid;gap:7px;}
 .shots.multi{grid-template-columns:repeat(2,1fr);}
 .shots img{display:block;width:100%;border:2px solid var(--red);background:var(--lime-deep);}
 .shots.multi img{aspect-ratio:1;object-fit:cover;}
-.shots .pending{display:flex;align-items:center;justify-content:center;aspect-ratio:3/2;
-  border:2px dashed var(--red);font-size:12px;font-weight:700;opacity:.7;}
 .post .body{font-size:14px;line-height:1.8;font-weight:500;white-space:pre-wrap;overflow-wrap:anywhere;margin-top:12px;}
 .post .meta{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;margin-top:10px;}
 .post .who{font-weight:900;font-size:13px;}
 .post .when{font-family:var(--sans-latin);font-weight:700;font-size:11px;opacity:.7;}
 .badge{font-weight:700;font-size:11px;padding:1px 10px;border:2px solid var(--red);border-radius:100px;}
 .badge.priv{background:var(--red);color:var(--lime);}
+.delbtn{margin-left:auto;border:2px solid var(--red);background:transparent;color:var(--red);
+  font-family:var(--sans);font-weight:700;font-size:11px;border-radius:100px;padding:3px 11px;cursor:pointer;}
+.delbtn:hover{background:var(--red);color:var(--lime);}
 .empty{font-size:13.5px;font-weight:700;line-height:1.75;padding:26px 0;text-align:center;white-space:pre-line;}
-.gate{text-align:center;padding:18px 0 6px;}
-.gate .who{font-size:12.5px;font-weight:700;margin-top:12px;opacity:.85;word-break:break-all;}
+.gate{text-align:center;padding:8px 0 6px;}
+.gate .msg{font-size:12.5px;font-weight:700;margin-top:14px;opacity:.85;}
 </style>
 </head>
 <body>
@@ -83,7 +89,7 @@ body{font-family:var(--sans);color:var(--red);background:var(--paper);line-heigh
       <b>2026 서머캠프 — 섬과 다리</b>
       <span>Islands and Bridges · by Yellow Pen Club</span>
     </div>
-    <button class="ghostbtn" id="signout" hidden>로그아웃</button>
+    <button class="ghostbtn" id="signout" hidden>잠그기</button>
   </div>
   <div class="rule" style="margin:0 7px;"></div>
 
@@ -95,10 +101,13 @@ body{font-family:var(--sans);color:var(--red);background:var(--paper);line-heigh
 
       <div id="banner" class="banner" hidden></div>
 
-      <!-- sign-in gate -->
+      <!-- password gate -->
       <div class="gate" id="gate" hidden>
-        <button class="applybtn" id="signin">구글 계정으로 로그인</button>
-        <div class="who" id="gate-msg"></div>
+        <form id="pwform">
+          <input class="pwbox" type="password" id="pw" placeholder="운영진 비밀번호" autocomplete="current-password">
+          <button class="applybtn" type="submit" id="pwgo">확인</button>
+        </form>
+        <div class="msg" id="gate-msg"></div>
       </div>
 
       <!-- content -->
@@ -120,29 +129,19 @@ body{font-family:var(--sans);color:var(--red);background:var(--paper);line-heigh
 </div>
 
 <script type="module">
-/* Keep these three in step with preview.html. */
-const ADMIN_EMAIL = 'underbluecup@gmail.com';
-const firebaseConfig = {
-  apiKey: '',
-  authDomain: '',
-  projectId: '',
-  storageBucket: '',
-  messagingSenderId: '',
-  appId: ''
-};
+/* Must match preview.html. */
+const API_BASE = 'https://summercamp-review.junghyun611.workers.dev';
 
-const COLLECTION = 'reviews';
-const PAGE_SIZE  = 200;
-const CONFIGURED = !!firebaseConfig.projectId;
+const PW_KEY = 'summercamp-admin-pw';
+const CONFIGURED = !!API_BASE;
+const api = API_BASE.replace(/\/$/, '');
 
 const $ = id => document.getElementById(id);
 const esc = s => String(s).replace(/[&<>"']/g, c =>
   ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
 function normalise(v){
-  const images = Array.isArray(v.images) ? v.images.filter(im => im && (im.url || im.path))
-               : v.imageUrl ? [{url:v.imageUrl, path:v.imagePath || ''}]
-               : [];
+  const images = (Array.isArray(v.images) ? v.images : []).filter(im => im && (im.url || im.key));
   return {
     id: v.id, name: v.name || '', message: v.message || '',
     images, isPublic: v.isPublic !== false, createdAt: v.createdAt
@@ -150,19 +149,14 @@ function normalise(v){
 }
 
 function when(ms){
-  const d = new Date(ms);
-  return d.toLocaleString('ko-KR', {month:'numeric', day:'numeric', hour:'2-digit', minute:'2-digit'});
+  return new Date(ms).toLocaleString('ko-KR', {month:'numeric', day:'numeric', hour:'2-digit', minute:'2-digit'});
 }
 
 /* ---------------- render ---------------- */
 let posts = [], filter = 'all';
 
-function visible(){
-  return posts.filter(p => filter === 'all' ? true : filter === 'private' ? !p.isPublic : p.isPublic);
-}
-
 function render(){
-  const rows = visible();
+  const rows = posts.filter(p => filter === 'all' ? true : filter === 'private' ? !p.isPublic : p.isPublic);
   const priv = posts.filter(p => !p.isPublic).length;
   $('counts').textContent = `전체 ${posts.length}개 · 운영진에게만 ${priv}개`;
 
@@ -170,17 +164,18 @@ function render(){
     ${i ? '<div class="rule"></div>' : ''}
     <div class="post">
       ${p.images.length ? `<div class="shots${p.images.length > 1 ? ' multi' : ''}">${
-        p.images.map(im => im.url
-          ? `<a href="${esc(im.url)}" target="_blank" rel="noopener"><img src="${esc(im.url)}" alt="" loading="lazy"></a>`
-          : `<div class="pending">사진 불러오는 중…</div>`).join('')
+        p.images.map(im => `<a href="${esc(im.url)}" target="_blank" rel="noopener"><img src="${esc(im.url)}" alt="" loading="lazy"></a>`).join('')
       }</div>` : ''}
       ${p.message ? `<div class="body">${esc(p.message)}</div>` : ''}
       <div class="meta">
         <span class="who">${esc(p.name || '익명')}</span>
         <span class="when">${esc(when(p.createdAt))}</span>
         ${p.isPublic ? '<span class="badge">공개</span>' : '<span class="badge priv">운영진에게만</span>'}
+        <button class="delbtn" data-id="${esc(p.id)}">삭제</button>
       </div>
     </div>`).join('') : `<div class="empty">해당하는 후기가 없습니다.</div>`;
+
+  $('list').querySelectorAll('.delbtn').forEach(b => { b.onclick = () => remove(b.dataset.id); });
 }
 
 document.querySelectorAll('.filterbtn').forEach(b => {
@@ -192,79 +187,100 @@ document.querySelectorAll('.filterbtn').forEach(b => {
 });
 
 /* ---------------- demo mode ---------------- */
-/* Without a Firebase project there is nothing to sign in to, so the page
+/* Without a Worker there is nothing to authenticate against, so the page
    reads whatever preview.html left in this browser. It shows the layout
    and the public/private split without standing in for real access
-   control — that lives in the Firestore and Storage rules. */
+   control — that lives in the Worker. */
 if (!CONFIGURED){
-  $('banner').textContent = '데모 모드 — Firebase 설정 전이라 이 브라우저에 저장된 후기만 보여줍니다. 실제 로그인은 설정 후 동작합니다.';
+  $('banner').textContent = '데모 모드 — 서버 연결 전이라 이 브라우저에 저장된 후기만 보여줍니다. 비밀번호 잠금은 연결 후 동작합니다.';
   $('banner').hidden = false;
   $('content').hidden = false;
   try { posts = (JSON.parse(localStorage.getItem('summercamp-reviews-demo')) || []).map(normalise); }
   catch(e){ posts = []; }
   posts.sort((a,b) => b.createdAt - a.createdAt);
   render();
+
   $('refresh').onclick = () => location.reload();
-} else {
-  /* ---------------- firebase ---------------- */
-  const V = 'https://www.gstatic.com/firebasejs/10.14.1';
-  const [app, fsm, stm, authm] = await Promise.all([
-    import(`${V}/firebase-app.js`),
-    import(`${V}/firebase-firestore.js`),
-    import(`${V}/firebase-storage.js`),
-    import(`${V}/firebase-auth.js`)
-  ]);
-  const a    = app.initializeApp(firebaseConfig);
-  const db   = fsm.getFirestore(a);
-  const sg   = stm.getStorage(a);
-  const auth = authm.getAuth(a);
-
-  $('signin').onclick = async () => {
-    try { await authm.signInWithPopup(auth, new authm.GoogleAuthProvider()); }
-    catch(e){ $('gate-msg').textContent = '로그인하지 못했습니다: ' + e.message; }
+  window.remove = id => {
+    if (!confirm('이 후기를 삭제할까요?')) return;
+    const all = (JSON.parse(localStorage.getItem('summercamp-reviews-demo')) || []).filter(p => String(p.id) !== String(id));
+    localStorage.setItem('summercamp-reviews-demo', JSON.stringify(all));
+    location.reload();
   };
-  $('signout').onclick = () => authm.signOut(auth);
-  $('refresh').onclick = () => loadAll();
+} else {
+  /* ---------------- worker ---------------- */
+  let pw = sessionStorage.getItem(PW_KEY) || '';
 
-  async function loadAll(){
-    /* No isPublic filter: the rules let this address read every post. */
-    const snap = await fsm.getDocs(
-      fsm.query(fsm.collection(db, COLLECTION), fsm.orderBy('createdAt', 'desc'), fsm.limit(PAGE_SIZE))
-    );
-    posts = snap.docs.map(d => normalise({
-      ...d.data(), id: d.id,
-      createdAt: d.data().createdAt?.toMillis ? d.data().createdAt.toMillis() : Date.now()
-    }));
-    render();
-
-    /* Private photos are stored without a download URL; fetch one now
-       that we are signed in, then repaint. */
-    let changed = false;
-    await Promise.all(posts.flatMap(p => p.images.map(async im => {
-      if (im.url || !im.path) return;
-      try { im.url = await stm.getDownloadURL(stm.ref(sg, im.path)); changed = true; }
-      catch(e){ console.error('photo', im.path, e); }
-    })));
-    if (changed) render();
+  async function callAdmin(path, options = {}){
+    const res = await fetch(`${api}${path}`, {
+      ...options,
+      headers: {...(options.headers || {}), 'X-Admin-Password': pw}
+    });
+    if (res.status === 401) throw new Error('unauthorized');
+    if (!res.ok) throw new Error(`${path} ${res.status}`);
+    return res.json();
   }
 
-  authm.onAuthStateChanged(auth, async user => {
-    const ok = user && user.email === ADMIN_EMAIL;
-    $('gate').hidden    = ok;
-    $('content').hidden = !ok;
-    $('signout').hidden = !user;
+  async function load(){
+    const {items} = await callAdmin('/admin/posts');
+    posts = (items || []).map(normalise);
+    render();
+  }
 
-    if (!user){ $('gate-msg').textContent = ''; return; }
-    if (!ok){
-      $('gate-msg').textContent = `${user.email} 계정은 열람 권한이 없습니다. 운영진 계정으로 로그인해주세요.`;
-      return;
-    }
-    try { await loadAll(); }
-    catch(e){
+  window.remove = async id => {
+    if (!confirm('이 후기를 삭제할까요? 사진도 함께 지워집니다.')) return;
+    try {
+      await callAdmin('/admin/delete', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({id})
+      });
+      posts = posts.filter(p => p.id !== id);
+      render();
+    } catch (e){
       console.error(e);
-      $('list').innerHTML = `<div class="empty">후기를 불러오지 못했습니다.\n보안 규칙이 적용되었는지 확인해주세요.</div>`;
+      alert('삭제하지 못했습니다.');
     }
+  };
+
+  function lock(msg){
+    pw = '';
+    sessionStorage.removeItem(PW_KEY);
+    $('gate').hidden = false;
+    $('content').hidden = true;
+    $('signout').hidden = true;
+    $('gate-msg').textContent = msg || '';
+  }
+
+  async function unlock(candidate){
+    pw = candidate;
+    try {
+      await load();
+      sessionStorage.setItem(PW_KEY, candidate);
+      $('gate').hidden = true;
+      $('content').hidden = false;
+      $('signout').hidden = false;
+      $('gate-msg').textContent = '';
+    } catch (e){
+      if (e.message === 'unauthorized') lock('비밀번호가 맞지 않습니다.');
+      else { console.error(e); lock('불러오지 못했습니다. 잠시 후 다시 시도해주세요.'); }
+    }
+  }
+
+  $('pwform').onsubmit = e => {
+    e.preventDefault();
+    const v = $('pw').value;
+    if (!v) return;
+    $('pwgo').disabled = true;
+    unlock(v).finally(() => { $('pwgo').disabled = false; $('pw').value = ''; });
+  };
+  $('signout').onclick = () => lock('');
+  $('refresh').onclick = () => load().catch(e => {
+    if (e.message === 'unauthorized') lock('다시 로그인해주세요.');
   });
+
+  /* Remembered for the tab only, so closing it locks the page again. */
+  if (pw) unlock(pw); else lock('');
 }
 </script>
 </body>

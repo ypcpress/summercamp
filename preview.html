@@ -245,28 +245,14 @@ body.lang-en .only-ko{display:none;}
 
 <script type="module">
 /* =========================================================
-   CONFIG — paste the Firebase web app config here.
-   While projectId is empty the page runs in demo mode: posts are
-   kept in this browser's localStorage only, so the whole UI can be
-   clicked through before the Firebase project exists.
+   CONFIG — the Cloudflare Worker that stores posts and issues
+   upload URLs, e.g. 'https://summercamp-review.junghyun611.workers.dev'.
+   While this is empty the page runs in demo mode: posts are kept in
+   this browser's localStorage only, so the whole UI can be clicked
+   through before the Worker exists.
    ========================================================= */
-const firebaseConfig = {
-  apiKey: '',
-  authDomain: '',
-  projectId: '',
-  storageBucket: '',
-  messagingSenderId: '',
-  appId: ''
-};
+const API_BASE = 'https://summercamp-review.junghyun611.workers.dev';
 
-/* Whoever signs in with this address on admin.html can read the posts
-   marked "organisers only". It must match the address in the Firestore
-   and Storage rules — the rules are what actually enforce this. */
-const ADMIN_EMAIL = 'underbluecup@gmail.com';
-
-const COLLECTION   = 'reviews';
-const PUBLIC_DIR   = 'reviews';          /* photos on public posts  */
-const PRIVATE_DIR  = 'reviews-private';  /* photos on private posts */
 const MAX_FILE_BYTES = 8 * 1024 * 1024;   /* reject originals above this */
 const MAX_DIM        = 1600;              /* downscale before upload      */
 const JPEG_QUALITY   = 0.85;
@@ -294,8 +280,8 @@ const T = {
   hintPriv:  {ko:'‘모두의 후기’에 보이지 않습니다. 운영진만 확인할 수 있습니다.',
               en:'Will not appear in “Everyone’s Notes”. Only the organisers can read it.'},
   postedPriv:{ko:'운영진에게만 전달했습니다. 고맙습니다!', en:'Sent to the organisers only — thank you!'},
-  demo:      {ko:'데모 모드 — Firebase 설정 전이라 올린 글이 이 브라우저에만 저장됩니다. 화면과 동작을 확인하는 용도입니다.',
-              en:'Demo mode — Firebase is not configured yet, so posts are stored only in this browser. Use it to check the layout and flow.'}
+  demo:      {ko:'데모 모드 — 서버 연결 전이라 올린 글이 이 브라우저에만 저장됩니다. 화면과 동작을 확인하는 용도입니다.',
+              en:'Demo mode — the server is not connected yet, so posts are stored only in this browser. Use it to check the layout and flow.'}
 };
 const t = o => o[lang] ?? o.ko;
 
@@ -312,9 +298,9 @@ function setLang(l){
 }
 
 /* ---------------- backends ---------------- */
-/* Both expose the same two calls, so swapping in Firebase changes
+/* Both expose the same two calls, so swapping in the Worker changes
    nothing else on the page. */
-const CONFIGURED = !!firebaseConfig.projectId;
+const CONFIGURED = !!API_BASE;
 
 function demoBackend(){
   const KEY = 'summercamp-reviews-demo';
@@ -343,11 +329,10 @@ function demoBackend(){
 
 /* Posts written before multi-photo support carry a single imageUrl. */
 function normalise(v){
-  /* A private post's photos carry a path but no url until an admin
-     resolves one, so keep entries that have either. */
-  const images = Array.isArray(v.images) ? v.images.filter(im => im && (im.url || im.path))
-               : v.imageUrl ? [{url:v.imageUrl, path:v.imagePath || ''}]
-               : [];
+  /* A private post's photos carry a key but no url until an admin
+     resolves a signed one, so keep entries that have either. */
+  const images = (Array.isArray(v.images) ? v.images : [])
+    .filter(im => im && (im.url || im.key));
   return {
     id: v.id,
     name: v.name || '',
@@ -358,53 +343,45 @@ function normalise(v){
   };
 }
 
-async function firebaseBackend(){
-  const V = 'https://www.gstatic.com/firebasejs/10.14.1';
-  const [app, fs, st] = await Promise.all([
-    import(`${V}/firebase-app.js`),
-    import(`${V}/firebase-firestore.js`),
-    import(`${V}/firebase-storage.js`)
-  ]);
-  const a  = app.initializeApp(firebaseConfig);
-  const db = fs.getFirestore(a);
-  const sg = st.getStorage(a);
-
+function workerBackend(){
+  const api = API_BASE.replace(/\/$/, '');
   return {
     async list(){
-      /* The isPublic filter is not what keeps private posts hidden — the
-         Firestore rules are. It is here because the rules reject a query
-         that could return documents the caller may not read. */
-      const snap = await fs.getDocs(
-        fs.query(fs.collection(db, COLLECTION),
-                 fs.where('isPublic', '==', true),
-                 fs.orderBy('createdAt', 'desc'),
-                 fs.limit(PAGE_SIZE))
-      );
-      return snap.docs.map(d => {
-        const v = d.data();
-        return normalise({
-          ...v,
-          id: d.id,
-          createdAt: v.createdAt?.toMillis ? v.createdAt.toMillis() : Date.now()
-        });
-      });
+      /* Only public posts are ever sent over this endpoint — the Worker
+         does the filtering, so private ones are not merely hidden here. */
+      const res = await fetch(`${api}/posts`);
+      if (!res.ok) throw new Error(`list ${res.status}`);
+      const {items} = await res.json();
+      return (items || []).map(normalise);
     },
     async add({name, message, blobs, isPublic, onProgress}){
-      const dir = isPublic ? PUBLIC_DIR : PRIVATE_DIR;
       const images = [];
       for (let i = 0; i < blobs.length; i++){
         onProgress?.(i + 1, blobs.length);
-        const path = `${dir}/${Date.now()}-${Math.random().toString(36).slice(2, 10)}.jpg`;
-        const r = st.ref(sg, path);
-        await st.uploadBytes(r, blobs[i], {contentType:'image/jpeg'});
-        /* Private photos live under a directory the public cannot read, so
-           there is no download URL to fetch here — admin.html resolves one
-           once signed in. Storing a URL would defeat the directory split. */
-        images.push({url: isPublic ? await st.getDownloadURL(r) : '', path});
+
+        /* The Worker signs a one-off URL and the photo goes straight to
+           R2, so the image bytes never pass through the Worker itself. */
+        const sres = await fetch(`${api}/presign`, {
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({contentType:'image/jpeg', isPublic})
+        });
+        if (!sres.ok) throw new Error(`presign ${sres.status}`);
+        const {uploadUrl, key} = await sres.json();
+
+        const put = await fetch(uploadUrl, {
+          method:'PUT', body: blobs[i], headers:{'Content-Type':'image/jpeg'}
+        });
+        if (!put.ok) throw new Error(`upload ${put.status}`);
+        images.push({key});
       }
-      await fs.addDoc(fs.collection(db, COLLECTION), {
-        name, message, images, isPublic, createdAt: fs.serverTimestamp()
+
+      const res = await fetch(`${api}/posts`, {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({name, message, isPublic, images})
       });
+      if (!res.ok) throw new Error(`post ${res.status}`);
     }
   };
 }
@@ -474,7 +451,7 @@ function showStatus(text, isError){
 function clearStatus(){ document.getElementById('rv-status').hidden = true; }
 
 /* ---------------- wiring ---------------- */
-const backend = CONFIGURED ? await firebaseBackend() : demoBackend();
+const backend = CONFIGURED ? workerBackend() : demoBackend();
 
 const fileInput = document.getElementById('rv-file');
 const thumbsEl  = document.getElementById('rv-thumbs');
