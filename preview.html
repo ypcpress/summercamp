@@ -135,6 +135,24 @@ body.lang-en .only-ko{display:none;}
 .rv-post .rv-who{font-weight:900;font-size:13px;}
 .rv-post .rv-when{font-family:var(--sans-latin);font-weight:700;font-size:11px;opacity:.7;}
 .rv-empty{font-size:13.5px;font-weight:700;line-height:1.75;padding:26px 0;text-align:center;}
+
+/* ---------------- lightbox ---------------- */
+.lb{position:fixed;inset:0;z-index:200;background:rgba(18,18,18,.94);
+  display:flex;align-items:center;justify-content:center;padding:60px 14px;}
+.lb-img{max-width:100%;max-height:100%;object-fit:contain;display:block;
+  border:2px solid var(--red);background:var(--lime-deep);}
+.lb-btn{position:absolute;border:2px solid var(--red);background:var(--paper);color:var(--red);
+  border-radius:100px;cursor:pointer;font-family:var(--sans-latin);font-weight:800;line-height:1;
+  display:flex;align-items:center;justify-content:center;padding:0;}
+.lb-btn:hover{background:var(--red);color:var(--lime);}
+.lb-close{top:14px;right:14px;width:40px;height:40px;font-size:19px;}
+.lb-prev,.lb-next{top:50%;transform:translateY(-50%);width:40px;height:40px;font-size:17px;}
+.lb-prev{left:14px;}
+.lb-next{right:14px;}
+.lb-count{position:absolute;bottom:16px;left:50%;transform:translateX(-50%);
+  background:var(--paper);color:var(--red);border:2px solid var(--red);border-radius:100px;
+  padding:4px 14px;font-family:var(--sans-latin);font-weight:800;font-size:12px;}
+body.lb-open{overflow:hidden;}
 </style>
 </head>
 <body class="lang-ko">
@@ -178,6 +196,12 @@ body.lang-en .only-ko{display:none;}
       <!-- ---- compose ---- -->
       <form class="rv-form" id="rv-form">
         <div class="rv-row">
+          <div class="rv-label"><span class="only-ko">이름</span><span class="only-en">Name</span><span class="opt only-ko">선택</span><span class="opt only-en">optional</span></div>
+          <input class="rv-input" type="text" id="rv-name" maxlength="20"
+            data-ph-ko="비워두면 익명으로 올라갑니다" data-ph-en="Leave blank to post anonymously">
+        </div>
+
+        <div class="rv-row">
           <div class="rv-label"><span class="only-ko">사진</span><span class="only-en">Photos</span><span class="opt only-ko">선택 · 최대 10장</span><span class="opt only-en">optional · up to 10</span></div>
           <input class="rv-file" type="file" id="rv-file" accept="image/*" multiple>
           <button class="rv-filebtn" type="button" id="rv-pick">
@@ -191,12 +215,6 @@ body.lang-en .only-ko{display:none;}
           <textarea class="rv-textarea" id="rv-message" maxlength="4000"
             data-ph-ko="서머 캠프에서 보고 듣고 나눈 이야기를 남겨주세요." data-ph-en="Leave a note about what you saw, heard, and shared."></textarea>
           <div class="rv-count"><span id="rv-count">0</span>/4000</div>
-        </div>
-
-        <div class="rv-row">
-          <div class="rv-label"><span class="only-ko">이름</span><span class="only-en">Name</span><span class="opt only-ko">선택</span><span class="opt only-en">optional</span></div>
-          <input class="rv-input" type="text" id="rv-name" maxlength="20"
-            data-ph-ko="비워두면 익명으로 올라갑니다" data-ph-en="Leave blank to post anonymously">
         </div>
 
         <div class="rv-row">
@@ -241,6 +259,14 @@ body.lang-en .only-ko{display:none;}
   </section>
 
   <button class="totop" id="totop" aria-label="맨 위로 / To top"><svg viewBox="0 0 24 24"><polyline points="6 15 12 9 18 15"/></svg></button>
+</div>
+
+<div class="lb" id="lb" hidden>
+  <img class="lb-img" id="lb-img" alt="">
+  <button class="lb-btn lb-close" id="lb-close" aria-label="close">×</button>
+  <button class="lb-btn lb-prev"  id="lb-prev"  aria-label="previous">←</button>
+  <button class="lb-btn lb-next"  id="lb-next"  aria-label="next">→</button>
+  <div class="lb-count" id="lb-count"></div>
 </div>
 
 <script type="module">
@@ -426,8 +452,10 @@ function renderList(){
     ${i ? '<div class="rule"></div>' : ''}
     <div class="rv-post">
       ${p.images.length ? `<div class="rv-shots${p.images.length > 1 ? ' multi' : ''}">${
-        p.images.map(im =>
-          `<a href="${esc(im.url)}" target="_blank" rel="noopener">
+        /* Kept as real links so right-click and middle-click still open the
+           full photo; the click handler takes over for the lightbox. */
+        p.images.map((im, j) =>
+          `<a class="rv-shot" href="${esc(im.url)}" data-p="${i}" data-i="${j}">
              <img src="${esc(im.url)}" alt="" loading="lazy">
            </a>`).join('')
       }</div>` : ''}
@@ -438,6 +466,66 @@ function renderList(){
       </div>
     </div>`).join('');
 }
+
+/* ---------------- lightbox ---------------- */
+const $id = id => document.getElementById(id);
+const lb = $id('lb'), lbImg = $id('lb-img'), lbCount = $id('lb-count');
+const lbPrev = $id('lb-prev'), lbNext = $id('lb-next');
+let lbShots = [], lbAt = 0;
+
+function lbPaint(){
+  lbImg.src = lbShots[lbAt];
+  lbCount.textContent = `${lbAt + 1} / ${lbShots.length}`;
+  const many = lbShots.length > 1;
+  lbPrev.hidden = lbNext.hidden = lbCount.hidden = !many;
+}
+function lbOpen(urls, at){
+  lbShots = urls; lbAt = at;
+  lbPaint();
+  lb.hidden = false;
+  document.body.classList.add('lb-open');
+}
+function lbClose(){
+  lb.hidden = true;
+  document.body.classList.remove('lb-open');
+  lbImg.removeAttribute('src');   /* stop the download if it is still going */
+}
+function lbStep(d){
+  lbAt = (lbAt + d + lbShots.length) % lbShots.length;
+  lbPaint();
+}
+
+$id('rv-list').addEventListener('click', e => {
+  const a = e.target.closest('.rv-shot');
+  if (!a) return;
+  const post = posts[Number(a.dataset.p)];
+  if (!post) return;
+  e.preventDefault();
+  lbOpen(post.images.map(im => im.url), Number(a.dataset.i));
+});
+
+$id('lb-close').onclick = lbClose;
+lbPrev.onclick = () => lbStep(-1);
+lbNext.onclick = () => lbStep(1);
+/* Only a click on the backdrop itself closes — not one that lands on the
+   photo or a button sitting on top of it. */
+lb.addEventListener('click', e => { if (e.target === lb) lbClose(); });
+document.addEventListener('keydown', e => {
+  if (lb.hidden) return;
+  if (e.key === 'Escape')     lbClose();
+  if (e.key === 'ArrowLeft')  lbStep(-1);
+  if (e.key === 'ArrowRight') lbStep(1);
+});
+
+/* Swiping is how a phone expects to move through photos. */
+let touchX = null;
+lb.addEventListener('touchstart', e => { touchX = e.changedTouches[0].clientX; }, {passive:true});
+lb.addEventListener('touchend', e => {
+  if (touchX === null || lbShots.length < 2) return;
+  const dx = e.changedTouches[0].clientX - touchX;
+  if (Math.abs(dx) > 45) lbStep(dx < 0 ? 1 : -1);
+  touchX = null;
+}, {passive:true});
 
 function showBanner(text){
   const b = document.getElementById('rv-banner');
