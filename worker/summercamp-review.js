@@ -50,7 +50,7 @@ const ALLOWED_ORIGINS = [
 
 const MAX_MESSAGE = 4000;
 const MAX_NAME    = 20;
-const MAX_IMAGES  = 10;
+const MAX_IMAGES  = 20;   // keep in step with MAX_FILES in preview.html
 const PAGE_SIZE   = 200;
 
 // Originals are kept under this prefix, always in the bucket with no
@@ -60,7 +60,7 @@ const ORIG_PREFIX = 'orig/';
 // This file is a copy of what runs; editing it does not deploy anything.
 // Bump this whenever the file changes, so GET /version tells you whether
 // the code in the dashboard is the code you are reading.
-const VERSION = '2026-08-04b · originals + video + posters';
+const VERSION = '2026-08-04c · originals + video + posters · 20 per post';
 
 /* ---------------- CORS ---------------- */
 function corsHeaders(origin) {
