@@ -120,6 +120,7 @@ body.lang-en .only-ko{display:none;}
   font-weight:700;font-size:13px;padding:10px 8px;cursor:pointer;line-height:1.3;}
 .rv-segbtn.active{background:var(--red);color:var(--lime);}
 .rv-seghint{font-size:12px;font-weight:700;line-height:1.6;opacity:.8;margin-top:8px;}
+.rv-note{font-size:12px;font-weight:700;line-height:1.6;opacity:.8;margin-top:9px;}
 .rv-status{font-size:12.5px;font-weight:700;line-height:1.6;margin-top:12px;text-align:center;}
 .rv-status.err{color:#8a0f00;}
 
@@ -210,11 +211,15 @@ body.lb-open{overflow:hidden;}
         </div>
 
         <div class="rv-row">
-          <div class="rv-label"><span class="only-ko">사진 · 동영상</span><span class="only-en">Photos & videos</span><span class="opt only-ko">선택 · 최대 10개</span><span class="opt only-en">optional · up to 10</span></div>
+          <div class="rv-label"><span class="only-ko">사진 · 동영상</span><span class="only-en">Photos & videos</span><span class="opt only-ko">선택 · 최대 20개</span><span class="opt only-en">optional · up to 20</span></div>
           <input class="rv-file" type="file" id="rv-file" accept="image/*,video/*" multiple>
           <button class="rv-filebtn" type="button" id="rv-pick">
             <span class="only-ko">사진 · 동영상 선택하기</span><span class="only-en">Choose photos or videos</span>
           </button>
+          <div class="rv-note">
+            <span class="only-ko">한 번에 20개의 사진을 올릴 수 있습니다. 20개 이상의 사진은 나눠서 올려주세요.</span>
+            <span class="only-en">You can post up to 20 at a time. If you have more, please split them across separate posts.</span>
+          </div>
           <div class="rv-thumbs" id="rv-thumbs"></div>
         </div>
 
@@ -285,7 +290,7 @@ const MAX_VIDEO_BYTES = 100 * 1024 * 1024;
 const MAX_DIM         = 1600;             /* the feed copy is downscaled  */
 const JPEG_QUALITY    = 0.85;
 const PAGE_SIZE       = 60;
-const MAX_FILES       = 10;               /* photos/videos per post       */
+const MAX_FILES       = 20;               /* photos/videos per post       */
 const MAX_MESSAGE     = 4000;
 
 /* ---------------- language ---------------- */
@@ -298,7 +303,7 @@ const T = {
   tooBig:    {ko:'사진 15MB · 동영상 100MB를 넘는 파일은 제외했습니다.',
               en:'Files over 15MB (photos) or 100MB (videos) were skipped.'},
   notImage:  {ko:'사진이나 동영상이 아닌 파일은 제외했습니다.', en:'Files that are not photos or videos were skipped.'},
-  tooMany:   {ko:`사진은 최대 ${MAX_FILES}장까지 올릴 수 있습니다.`, en:`You can post up to ${MAX_FILES} photos.`},
+  tooMany:   {ko:`한 번에 최대 ${MAX_FILES}개까지 올릴 수 있습니다.`, en:`You can post up to ${MAX_FILES} at a time.`},
   prepping:  {ko:'사진 준비 중…',                 en:'Preparing photos…'},
   failed:    {ko:'올리지 못했습니다. 잠시 후 다시 시도해주세요.', en:'Could not post. Please try again in a moment.'},
   loadFail:  {ko:'후기를 불러오지 못했습니다.',    en:'Could not load the notes.'},
