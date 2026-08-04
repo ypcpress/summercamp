@@ -713,7 +713,9 @@ document.getElementById('rv-form').onsubmit = async (e) => {
     await load();
   } catch (err){
     console.error(err);
-    showStatus(t(T.failed), true);
+    /* The step and status code ride along, so a report of "it failed" can
+       be acted on without asking anyone to open the console. */
+    showStatus(`${t(T.failed)} (${err.message})`, true);
   } finally {
     submitEl.disabled = false;
   }

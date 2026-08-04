@@ -57,6 +57,11 @@ const PAGE_SIZE   = 200;
 // public access. The feed is served the downscaled copy instead.
 const ORIG_PREFIX = 'orig/';
 
+// This file is a copy of what runs; editing it does not deploy anything.
+// Bump this whenever the file changes, so GET /version tells you whether
+// the code in the dashboard is the code you are reading.
+const VERSION = '2026-08-04 · originals + video';
+
 /* ---------------- CORS ---------------- */
 function corsHeaders(origin) {
   const allowOrigin = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
@@ -215,7 +220,9 @@ async function handlePresign(request, env, origin) {
   const bucket = original ? env.R2_BUCKET_PRIVATE : bucketFor(env, isPublic !== false);
   const key = original ? `${ORIG_PREFIX}${stem}.${safeExt}` : `${stem}.${safeExt}`;
 
-  const uploadUrl = await presignUrl(env, 'PUT', objectUri(bucket, key), {});
+  // An hour, not the default ten minutes: a 100MB video over mobile data
+  // can outlast a short-lived signature and fail at the very end.
+  const uploadUrl = await presignUrl(env, 'PUT', objectUri(bucket, key), {}, 3600);
   return json({ uploadUrl, key }, origin);
 }
 
@@ -323,6 +330,9 @@ export default {
     }
 
     try {
+      if (request.method === 'GET' && pathname === '/version') {
+        return json({ version: VERSION }, origin);
+      }
       if (request.method === 'GET' && (pathname === '/posts' || pathname === '/')) {
         return await handleListPublic(env, origin);
       }
