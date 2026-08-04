@@ -8,6 +8,17 @@
 // Photos are uploaded by the browser directly to R2 with a presigned PUT.
 // Post records (name, message, visibility, photo keys) live in D1.
 //
+// Both buckets need a CORS policy of their own (R2 > bucket > Settings >
+// CORS Policy). The photo is PUT to R2 by the browser, not by this Worker,
+// so the Worker's own CORS headers do not cover it and the upload is
+// blocked without one:
+//   [{ "AllowedOrigins": ["https://summercamp2026.yellowpenclub.com",
+//                         "https://ypcpress.github.io"],
+//      "AllowedMethods": ["PUT", "GET"],
+//      "AllowedHeaders": ["content-type"],
+//      "ExposeHeaders": ["ETag"],
+//      "MaxAgeSeconds": 3600 }]
+//
 // Required binding (Settings > Bindings):
 //   DB                     D1 database
 //
