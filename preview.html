@@ -105,17 +105,23 @@ body.lang-en .only-ko{display:none;}
 .rv-filebtn{display:inline-flex;align-items:center;gap:7px;border:2px solid var(--red);background:transparent;color:var(--red);
   font-family:var(--sans);font-weight:700;font-size:13px;border-radius:100px;padding:8px 15px;cursor:pointer;}
 .rv-filebtn:hover{background:var(--red);color:var(--lime);}
-.rv-thumb{position:relative;margin-top:11px;display:none;}
-.rv-thumb.show{display:block;}
-.rv-thumb img{display:block;width:100%;border:2px solid var(--red);background:var(--lime-deep);}
-.rv-thumb button{position:absolute;top:8px;right:8px;width:30px;height:30px;border-radius:100px;
-  border:2px solid var(--red);background:var(--paper);color:var(--red);font-weight:900;font-size:15px;cursor:pointer;line-height:1;}
+.rv-thumbs{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:12px;}
+.rv-thumbs:empty{display:none;}
+.rv-thumb{position:relative;}
+.rv-thumb img{display:block;width:100%;aspect-ratio:1;object-fit:cover;border:2px solid var(--red);background:var(--lime-deep);}
+.rv-thumb button{position:absolute;top:4px;right:4px;width:24px;height:24px;border-radius:100px;
+  border:2px solid var(--red);background:var(--paper);color:var(--red);font-weight:900;font-size:13px;cursor:pointer;line-height:1;
+  display:flex;align-items:center;justify-content:center;padding:0;}
 .rv-note{font-size:12px;font-weight:700;line-height:1.6;opacity:.8;margin-top:9px;}
 .rv-status{font-size:12.5px;font-weight:700;line-height:1.6;margin-top:12px;text-align:center;}
 .rv-status.err{color:#8a0f00;}
 
 .rv-post{padding:18px 0;}
-.rv-post .rv-img{display:block;width:100%;border:2px solid var(--red);background:var(--lime-deep);}
+.rv-shots{display:grid;gap:7px;}
+.rv-shots.multi{grid-template-columns:repeat(2,1fr);}
+.rv-shots a{display:block;}
+.rv-shots img{display:block;width:100%;border:2px solid var(--red);background:var(--lime-deep);}
+.rv-shots.multi img{aspect-ratio:1;object-fit:cover;}
 .rv-post .rv-body{font-size:14px;line-height:1.8;font-weight:500;white-space:pre-wrap;overflow-wrap:anywhere;margin-top:12px;}
 .rv-post .rv-meta{display:flex;flex-wrap:wrap;gap:5px 10px;align-items:baseline;margin-top:10px;}
 .rv-post .rv-who{font-weight:900;font-size:13px;}
@@ -164,22 +170,19 @@ body.lang-en .only-ko{display:none;}
       <!-- ---- compose ---- -->
       <form class="rv-form" id="rv-form">
         <div class="rv-row">
-          <div class="rv-label"><span class="only-ko">사진</span><span class="only-en">Photo</span><span class="opt only-ko">선택</span><span class="opt only-en">optional</span></div>
-          <input class="rv-file" type="file" id="rv-file" accept="image/*">
+          <div class="rv-label"><span class="only-ko">사진</span><span class="only-en">Photos</span><span class="opt only-ko">선택 · 최대 10장</span><span class="opt only-en">optional · up to 10</span></div>
+          <input class="rv-file" type="file" id="rv-file" accept="image/*" multiple>
           <button class="rv-filebtn" type="button" id="rv-pick">
-            <span class="only-ko">사진 선택하기</span><span class="only-en">Choose a photo</span>
+            <span class="only-ko">사진 선택하기</span><span class="only-en">Choose photos</span>
           </button>
-          <div class="rv-thumb" id="rv-thumb">
-            <img id="rv-thumb-img" alt="">
-            <button type="button" id="rv-clear" aria-label="remove">×</button>
-          </div>
+          <div class="rv-thumbs" id="rv-thumbs"></div>
         </div>
 
         <div class="rv-row">
           <div class="rv-label"><span class="only-ko">메시지</span><span class="only-en">Message</span><span class="opt only-ko">선택</span><span class="opt only-en">optional</span></div>
-          <textarea class="rv-textarea" id="rv-message" maxlength="500"
+          <textarea class="rv-textarea" id="rv-message" maxlength="4000"
             data-ph-ko="서머 캠프에서 보고 듣고 나눈 이야기를 남겨주세요." data-ph-en="Leave a note about what you saw, heard, and shared."></textarea>
-          <div class="rv-count"><span id="rv-count">0</span>/500</div>
+          <div class="rv-count"><span id="rv-count">0</span>/4000</div>
         </div>
 
         <div class="rv-row">
@@ -195,6 +198,10 @@ body.lang-en .only-ko{display:none;}
         <div class="rv-note">
           <span class="only-ko">※ 사진과 메시지 중 하나는 채워주세요. 올린 글은 누구나 볼 수 있습니다.</span>
           <span class="only-en">※ Please fill in either a photo or a message. Posts are visible to everyone.</span>
+        </div>
+        <div class="rv-note">
+          <span class="only-ko">※ 사진은 한 번에 여러 장 고를 수 있고, 여러 번 나눠 골라도 함께 올라갑니다.</span>
+          <span class="only-en">※ You can pick several photos at once, or add more in separate goes — they post together.</span>
         </div>
       </form>
 
@@ -236,6 +243,8 @@ const MAX_FILE_BYTES = 8 * 1024 * 1024;   /* reject originals above this */
 const MAX_DIM        = 1600;              /* downscale before upload      */
 const JPEG_QUALITY   = 0.85;
 const PAGE_SIZE      = 60;
+const MAX_FILES      = 10;                /* photos per post             */
+const MAX_MESSAGE    = 4000;
 
 /* ---------------- language ---------------- */
 let lang = 'ko';
@@ -243,8 +252,10 @@ const T = {
   posting:   {ko:'올리는 중…',                    en:'Posting…'},
   posted:    {ko:'올렸습니다. 고맙습니다!',        en:'Posted — thank you!'},
   needBody:  {ko:'사진이나 메시지를 하나 이상 채워주세요.', en:'Please add a photo or a message.'},
-  tooBig:    {ko:'사진이 너무 큽니다. 8MB 이하로 올려주세요.', en:'That photo is too large. Please use one under 8MB.'},
-  notImage:  {ko:'이미지 파일만 올릴 수 있습니다.', en:'Only image files can be uploaded.'},
+  tooBig:    {ko:'8MB가 넘는 사진은 제외했습니다.', en:'Photos over 8MB were skipped.'},
+  notImage:  {ko:'이미지가 아닌 파일은 제외했습니다.', en:'Files that are not images were skipped.'},
+  tooMany:   {ko:`사진은 최대 ${MAX_FILES}장까지 올릴 수 있습니다.`, en:`You can post up to ${MAX_FILES} photos.`},
+  prepping:  {ko:'사진 준비 중…',                 en:'Preparing photos…'},
   failed:    {ko:'올리지 못했습니다. 잠시 후 다시 시도해주세요.', en:'Could not post. Please try again in a moment.'},
   loadFail:  {ko:'후기를 불러오지 못했습니다.',    en:'Could not load the notes.'},
   loading:   {ko:'불러오는 중…',                  en:'Loading…'},
@@ -274,16 +285,37 @@ const CONFIGURED = !!firebaseConfig.projectId;
 function demoBackend(){
   const KEY = 'summercamp-reviews-demo';
   const read = () => { try { return JSON.parse(localStorage.getItem(KEY)) || []; } catch(e){ return []; } };
+  const toDataUrl = blob => new Promise(res => {
+    const r = new FileReader(); r.onload = () => res(r.result); r.readAsDataURL(blob);
+  });
   return {
-    async list(){ return read().sort((a,b) => b.createdAt - a.createdAt).slice(0, PAGE_SIZE); },
-    async add({name, message, blob}){
-      const imageUrl = blob ? await new Promise(res => {
-        const r = new FileReader(); r.onload = () => res(r.result); r.readAsDataURL(blob);
-      }) : '';
+    async list(){
+      return read().sort((a,b) => b.createdAt - a.createdAt).slice(0, PAGE_SIZE).map(normalise);
+    },
+    async add({name, message, blobs, onProgress}){
+      const images = [];
+      for (let i = 0; i < blobs.length; i++){
+        onProgress?.(i + 1, blobs.length);
+        images.push({url: await toDataUrl(blobs[i]), path:''});
+      }
       const all = read();
-      all.push({id:String(Date.now()), name, message, imageUrl, createdAt:Date.now()});
+      all.push({id:String(Date.now()), name, message, images, createdAt:Date.now()});
       localStorage.setItem(KEY, JSON.stringify(all));
     }
+  };
+}
+
+/* Posts written before multi-photo support carry a single imageUrl. */
+function normalise(v){
+  const images = Array.isArray(v.images) ? v.images.filter(im => im && im.url)
+               : v.imageUrl ? [{url:v.imageUrl, path:v.imagePath || ''}]
+               : [];
+  return {
+    id: v.id,
+    name: v.name || '',
+    message: v.message || '',
+    images,
+    createdAt: v.createdAt
   };
 }
 
@@ -305,25 +337,24 @@ async function firebaseBackend(){
       );
       return snap.docs.map(d => {
         const v = d.data();
-        return {
+        return normalise({
+          ...v,
           id: d.id,
-          name: v.name || '',
-          message: v.message || '',
-          imageUrl: v.imageUrl || '',
           createdAt: v.createdAt?.toMillis ? v.createdAt.toMillis() : Date.now()
-        };
+        });
       });
     },
-    async add({name, message, blob}){
-      let imageUrl = '', imagePath = '';
-      if (blob){
-        imagePath = `${COLLECTION}/${Date.now()}-${Math.random().toString(36).slice(2, 10)}.jpg`;
-        const r = st.ref(sg, imagePath);
-        await st.uploadBytes(r, blob, {contentType:'image/jpeg'});
-        imageUrl = await st.getDownloadURL(r);
+    async add({name, message, blobs, onProgress}){
+      const images = [];
+      for (let i = 0; i < blobs.length; i++){
+        onProgress?.(i + 1, blobs.length);
+        const path = `${COLLECTION}/${Date.now()}-${Math.random().toString(36).slice(2, 10)}.jpg`;
+        const r = st.ref(sg, path);
+        await st.uploadBytes(r, blobs[i], {contentType:'image/jpeg'});
+        images.push({url: await st.getDownloadURL(r), path});
       }
       await fs.addDoc(fs.collection(db, COLLECTION), {
-        name, message, imageUrl, imagePath, createdAt: fs.serverTimestamp()
+        name, message, images, createdAt: fs.serverTimestamp()
       });
     }
   };
@@ -368,7 +399,12 @@ function renderList(){
   el.innerHTML = posts.map((p, i) => `
     ${i ? '<div class="rule"></div>' : ''}
     <div class="rv-post">
-      ${p.imageUrl ? `<img class="rv-img" src="${esc(p.imageUrl)}" alt="" loading="lazy">` : ''}
+      ${p.images.length ? `<div class="rv-shots${p.images.length > 1 ? ' multi' : ''}">${
+        p.images.map(im =>
+          `<a href="${esc(im.url)}" target="_blank" rel="noopener">
+             <img src="${esc(im.url)}" alt="" loading="lazy">
+           </a>`).join('')
+      }</div>` : ''}
       ${p.message  ? `<div class="rv-body">${esc(p.message)}</div>` : ''}
       <div class="rv-meta">
         <span class="rv-who">${esc(p.name || t(T.anon))}</span>
@@ -392,50 +428,86 @@ function clearStatus(){ document.getElementById('rv-status').hidden = true; }
 const backend = CONFIGURED ? await firebaseBackend() : demoBackend();
 
 const fileInput = document.getElementById('rv-file');
-const thumb     = document.getElementById('rv-thumb');
-const thumbImg  = document.getElementById('rv-thumb-img');
+const thumbsEl  = document.getElementById('rv-thumbs');
 const messageEl = document.getElementById('rv-message');
 const nameEl    = document.getElementById('rv-name');
 const submitEl  = document.getElementById('rv-submit');
-let pickedFile  = null;
+
+/* {id, file, url} — url is an object URL held until the thumb goes away.
+   Thumbs are keyed by id, not by position, so a click landing on a stale
+   button (two removals before a repaint) drops the right photo or none. */
+let picked = [];
+let pickSeq = 0;
 
 document.getElementById('rv-pick').onclick = () => fileInput.click();
 
+/* Successive picks add to the selection rather than replacing it, so a
+   visitor can pull photos from several albums into one post. */
 fileInput.onchange = () => {
-  const f = fileInput.files[0];
-  if (!f) return;
-  if (!f.type.startsWith('image/')){ showStatus(t(T.notImage), true); fileInput.value = ''; return; }
-  if (f.size > MAX_FILE_BYTES){     showStatus(t(T.tooBig),   true); fileInput.value = ''; return; }
-  clearStatus();
-  pickedFile = f;
-  thumbImg.src = URL.createObjectURL(f);
-  thumb.classList.add('show');
+  const chosen = Array.from(fileInput.files);
+  fileInput.value = '';               /* let the same file be re-picked */
+  if (!chosen.length) return;
+
+  const skipped = [];
+  for (const f of chosen){
+    if (!f.type.startsWith('image/')){ skipped.push(T.notImage); continue; }
+    if (f.size > MAX_FILE_BYTES){      skipped.push(T.tooBig);   continue; }
+    if (picked.length >= MAX_FILES){   skipped.push(T.tooMany);  break;    }
+    picked.push({id:++pickSeq, file:f, url:URL.createObjectURL(f)});
+  }
+  renderThumbs();
+
+  const uniq = [...new Set(skipped)];
+  if (uniq.length) showStatus(uniq.map(t).join(' '), true);
+  else clearStatus();
 };
 
-document.getElementById('rv-clear').onclick = () => {
-  pickedFile = null;
-  fileInput.value = '';
-  thumb.classList.remove('show');
-  if (thumbImg.src.startsWith('blob:')) URL.revokeObjectURL(thumbImg.src);
-  thumbImg.removeAttribute('src');
-};
+function renderThumbs(){
+  thumbsEl.innerHTML = picked.map(p => `
+    <div class="rv-thumb">
+      <img src="${p.url}" alt="">
+      <button type="button" data-id="${p.id}" aria-label="remove">×</button>
+    </div>`).join('');
+  thumbsEl.querySelectorAll('button').forEach(b => {
+    b.onclick = () => {
+      const id = Number(b.dataset.id);
+      const i  = picked.findIndex(p => p.id === id);
+      if (i < 0) return;
+      URL.revokeObjectURL(picked[i].url);
+      picked.splice(i, 1);
+      renderThumbs();
+    };
+  });
+}
+
+function clearPicked(){
+  picked.forEach(p => URL.revokeObjectURL(p.url));
+  picked = [];
+  renderThumbs();
+}
 
 messageEl.oninput = () => { document.getElementById('rv-count').textContent = messageEl.value.length; };
 
 document.getElementById('rv-form').onsubmit = async (e) => {
   e.preventDefault();
-  const message = messageEl.value.trim();
+  const message = messageEl.value.trim().slice(0, MAX_MESSAGE);
   const name    = nameEl.value.trim();
-  if (!message && !pickedFile){ showStatus(t(T.needBody), true); return; }
+  if (!message && !picked.length){ showStatus(t(T.needBody), true); return; }
 
   submitEl.disabled = true;
-  showStatus(t(T.posting));
+  showStatus(t(picked.length ? T.prepping : T.posting));
   try {
-    const blob = pickedFile ? await compressImage(pickedFile) : null;
-    await backend.add({name, message, blob});
+    const blobs = [];
+    for (const p of picked) blobs.push(await compressImage(p.file));
+
+    await backend.add({
+      name, message, blobs,
+      onProgress: (n, total) => showStatus(total > 1 ? `${t(T.posting)} ${n}/${total}` : t(T.posting))
+    });
+
     messageEl.value = ''; nameEl.value = '';
     document.getElementById('rv-count').textContent = '0';
-    document.getElementById('rv-clear').click();
+    clearPicked();
     showStatus(t(T.posted));
     await load();
   } catch (err){
