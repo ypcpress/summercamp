@@ -120,7 +120,6 @@ body.lang-en .only-ko{display:none;}
   font-weight:700;font-size:13px;padding:10px 8px;cursor:pointer;line-height:1.3;}
 .rv-segbtn.active{background:var(--red);color:var(--lime);}
 .rv-seghint{font-size:12px;font-weight:700;line-height:1.6;opacity:.8;margin-top:8px;}
-.rv-note{font-size:12px;font-weight:700;line-height:1.6;opacity:.8;margin-top:9px;}
 .rv-status{font-size:12.5px;font-weight:700;line-height:1.6;margin-top:12px;text-align:center;}
 .rv-status.err{color:#8a0f00;}
 
@@ -199,11 +198,15 @@ body.lb-open{overflow:hidden;}
       <div id="rv-banner" class="rv-banner" hidden></div>
 
       <!-- ---- compose ---- -->
-      <form class="rv-form" id="rv-form">
+      <!-- required stays for semantics, but novalidate keeps the browser's
+           own popup from pre-empting the handler: it speaks the browser's
+           language rather than the one chosen here, and it leaves a stale
+           status line sitting underneath. -->
+      <form class="rv-form" id="rv-form" novalidate>
         <div class="rv-row">
-          <div class="rv-label"><span class="only-ko">이름</span><span class="only-en">Name</span><span class="opt only-ko">선택</span><span class="opt only-en">optional</span></div>
-          <input class="rv-input" type="text" id="rv-name" maxlength="20"
-            data-ph-ko="비워두면 익명으로 올라갑니다" data-ph-en="Leave blank to post anonymously">
+          <div class="rv-label"><span class="only-ko">이름</span><span class="only-en">Name</span><span class="opt only-ko">필수</span><span class="opt only-en">required</span></div>
+          <input class="rv-input" type="text" id="rv-name" maxlength="20" required
+            data-ph-ko="이름을 남겨주세요" data-ph-en="Please leave your name">
         </div>
 
         <div class="rv-row">
@@ -239,18 +242,6 @@ body.lb-open{overflow:hidden;}
           <span class="only-ko">올리기</span><span class="only-en">Post</span>
         </button>
         <div class="rv-status" id="rv-status" hidden></div>
-        <div class="rv-note">
-          <span class="only-ko">※ 사진·동영상과 메시지 중 하나는 채워주세요.</span>
-          <span class="only-en">※ Please fill in either a photo/video or a message.</span>
-        </div>
-        <div class="rv-note">
-          <span class="only-ko">※ 한 번에 여러 개 고를 수 있고, 여러 번 나눠 골라도 함께 올라갑니다.</span>
-          <span class="only-en">※ You can pick several at once, or add more in separate goes — they post together.</span>
-        </div>
-        <div class="rv-note">
-          <span class="only-ko">※ 사진은 화면에 맞게 줄여서 보여드리고, 원본은 그대로 보관합니다.</span>
-          <span class="only-en">※ Photos are shown at a reduced size; the originals are kept as they are.</span>
-        </div>
       </form>
 
       <div class="rule rule-pin" style="margin-top:20px;"></div>
@@ -302,6 +293,7 @@ let lang = 'ko';
 const T = {
   posting:   {ko:'올리는 중…',                    en:'Posting…'},
   posted:    {ko:'올렸습니다. 고맙습니다!',        en:'Posted — thank you!'},
+  needName:  {ko:'이름을 남겨주세요.', en:'Please leave your name.'},
   needBody:  {ko:'사진이나 메시지를 하나 이상 채워주세요.', en:'Please add a photo or a message.'},
   tooBig:    {ko:'사진 15MB · 동영상 100MB를 넘는 파일은 제외했습니다.',
               en:'Files over 15MB (photos) or 100MB (videos) were skipped.'},
@@ -736,6 +728,7 @@ document.getElementById('rv-form').onsubmit = async (e) => {
   e.preventDefault();
   const message = messageEl.value.trim().slice(0, MAX_MESSAGE);
   const name    = nameEl.value.trim();
+  if (!name){ showStatus(t(T.needName), true); nameEl.focus(); return; }
   if (!message && !picked.length){ showStatus(t(T.needBody), true); return; }
 
   submitEl.disabled = true;
