@@ -111,7 +111,7 @@ body.lang-en .only-ko{display:none;}
 .rv-thumbs{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:12px;}
 .rv-thumbs:empty{display:none;}
 .rv-thumb{position:relative;}
-.rv-thumb img{display:block;width:100%;aspect-ratio:1;object-fit:cover;border:2px solid var(--red);background:var(--lime-deep);}
+.rv-thumb img,.rv-thumb video{display:block;width:100%;aspect-ratio:1;object-fit:cover;border:2px solid var(--red);background:var(--lime-deep);}
 .rv-thumb button{position:absolute;top:4px;right:4px;width:24px;height:24px;border-radius:100px;
   border:2px solid var(--red);background:var(--paper);color:var(--red);font-weight:900;font-size:13px;cursor:pointer;line-height:1;
   display:flex;align-items:center;justify-content:center;padding:0;}
@@ -128,8 +128,13 @@ body.lang-en .only-ko{display:none;}
 .rv-shots{display:grid;gap:7px;}
 .rv-shots.multi{grid-template-columns:repeat(2,1fr);}
 .rv-shots a{display:block;}
-.rv-shots img{display:block;width:100%;border:2px solid var(--red);background:var(--lime-deep);}
-.rv-shots.multi img{aspect-ratio:1;object-fit:cover;}
+.rv-shots img,.rv-shots video{display:block;width:100%;border:2px solid var(--red);background:var(--lime-deep);}
+.rv-shots.multi img,.rv-shots.multi video{aspect-ratio:1;object-fit:cover;}
+.rv-shots a{position:relative;}
+.rv-play{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+  width:44px;height:44px;border-radius:100px;border:2px solid var(--red);background:var(--paper);
+  color:var(--red);font-size:15px;display:flex;align-items:center;justify-content:center;
+  padding-left:3px;pointer-events:none;}
 .rv-post .rv-body{font-size:14px;line-height:1.8;font-weight:500;white-space:pre-wrap;overflow-wrap:anywhere;margin-top:12px;}
 .rv-post .rv-meta{display:flex;flex-wrap:wrap;gap:5px 10px;align-items:baseline;margin-top:10px;}
 .rv-post .rv-who{font-weight:900;font-size:13px;}
@@ -202,10 +207,10 @@ body.lb-open{overflow:hidden;}
         </div>
 
         <div class="rv-row">
-          <div class="rv-label"><span class="only-ko">사진</span><span class="only-en">Photos</span><span class="opt only-ko">선택 · 최대 10장</span><span class="opt only-en">optional · up to 10</span></div>
-          <input class="rv-file" type="file" id="rv-file" accept="image/*" multiple>
+          <div class="rv-label"><span class="only-ko">사진 · 동영상</span><span class="only-en">Photos & videos</span><span class="opt only-ko">선택 · 최대 10개</span><span class="opt only-en">optional · up to 10</span></div>
+          <input class="rv-file" type="file" id="rv-file" accept="image/*,video/*" multiple>
           <button class="rv-filebtn" type="button" id="rv-pick">
-            <span class="only-ko">사진 선택하기</span><span class="only-en">Choose photos</span>
+            <span class="only-ko">사진 · 동영상 선택하기</span><span class="only-en">Choose photos or videos</span>
           </button>
           <div class="rv-thumbs" id="rv-thumbs"></div>
         </div>
@@ -235,12 +240,16 @@ body.lb-open{overflow:hidden;}
         </button>
         <div class="rv-status" id="rv-status" hidden></div>
         <div class="rv-note">
-          <span class="only-ko">※ 사진과 메시지 중 하나는 채워주세요. 올린 글은 누구나 볼 수 있습니다.</span>
-          <span class="only-en">※ Please fill in either a photo or a message. Posts are visible to everyone.</span>
+          <span class="only-ko">※ 사진·동영상과 메시지 중 하나는 채워주세요.</span>
+          <span class="only-en">※ Please fill in either a photo/video or a message.</span>
         </div>
         <div class="rv-note">
-          <span class="only-ko">※ 사진은 한 번에 여러 장 고를 수 있고, 여러 번 나눠 골라도 함께 올라갑니다.</span>
-          <span class="only-en">※ You can pick several photos at once, or add more in separate goes — they post together.</span>
+          <span class="only-ko">※ 한 번에 여러 개 고를 수 있고, 여러 번 나눠 골라도 함께 올라갑니다.</span>
+          <span class="only-en">※ You can pick several at once, or add more in separate goes — they post together.</span>
+        </div>
+        <div class="rv-note">
+          <span class="only-ko">※ 사진은 화면에 맞게 줄여서 보여드리고, 원본은 그대로 보관합니다.</span>
+          <span class="only-en">※ Photos are shown at a reduced size; the originals are kept as they are.</span>
         </div>
       </form>
 
@@ -263,6 +272,7 @@ body.lb-open{overflow:hidden;}
 
 <div class="lb" id="lb" hidden>
   <img class="lb-img" id="lb-img" alt="">
+  <video class="lb-img" id="lb-vid" controls playsinline hidden></video>
   <button class="lb-btn lb-close" id="lb-close" aria-label="close">×</button>
   <button class="lb-btn lb-prev"  id="lb-prev"  aria-label="previous">←</button>
   <button class="lb-btn lb-next"  id="lb-next"  aria-label="next">→</button>
@@ -279,12 +289,13 @@ body.lb-open{overflow:hidden;}
    ========================================================= */
 const API_BASE = 'https://summercamp-review.junghyun611.workers.dev';
 
-const MAX_FILE_BYTES = 8 * 1024 * 1024;   /* reject originals above this */
-const MAX_DIM        = 1600;              /* downscale before upload      */
-const JPEG_QUALITY   = 0.85;
-const PAGE_SIZE      = 60;
-const MAX_FILES      = 10;                /* photos per post             */
-const MAX_MESSAGE    = 4000;
+const MAX_IMAGE_BYTES = 15 * 1024 * 1024;
+const MAX_VIDEO_BYTES = 100 * 1024 * 1024;
+const MAX_DIM         = 1600;             /* the feed copy is downscaled  */
+const JPEG_QUALITY    = 0.85;
+const PAGE_SIZE       = 60;
+const MAX_FILES       = 10;               /* photos/videos per post       */
+const MAX_MESSAGE     = 4000;
 
 /* ---------------- language ---------------- */
 let lang = 'ko';
@@ -292,8 +303,9 @@ const T = {
   posting:   {ko:'올리는 중…',                    en:'Posting…'},
   posted:    {ko:'올렸습니다. 고맙습니다!',        en:'Posted — thank you!'},
   needBody:  {ko:'사진이나 메시지를 하나 이상 채워주세요.', en:'Please add a photo or a message.'},
-  tooBig:    {ko:'8MB가 넘는 사진은 제외했습니다.', en:'Photos over 8MB were skipped.'},
-  notImage:  {ko:'이미지가 아닌 파일은 제외했습니다.', en:'Files that are not images were skipped.'},
+  tooBig:    {ko:'사진 15MB · 동영상 100MB를 넘는 파일은 제외했습니다.',
+              en:'Files over 15MB (photos) or 100MB (videos) were skipped.'},
+  notImage:  {ko:'사진이나 동영상이 아닌 파일은 제외했습니다.', en:'Files that are not photos or videos were skipped.'},
   tooMany:   {ko:`사진은 최대 ${MAX_FILES}장까지 올릴 수 있습니다.`, en:`You can post up to ${MAX_FILES} photos.`},
   prepping:  {ko:'사진 준비 중…',                 en:'Preparing photos…'},
   failed:    {ko:'올리지 못했습니다. 잠시 후 다시 시도해주세요.', en:'Could not post. Please try again in a moment.'},
@@ -340,11 +352,16 @@ function demoBackend(){
                    .sort((a,b) => b.createdAt - a.createdAt)
                    .slice(0, PAGE_SIZE).map(normalise);
     },
-    async add({name, message, blobs, isPublic, onProgress}){
+    async add({name, message, items, isPublic, onProgress}){
       const images = [];
-      for (let i = 0; i < blobs.length; i++){
-        onProgress?.(i + 1, blobs.length);
-        images.push({url: await toDataUrl(blobs[i]), path:''});
+      for (let i = 0; i < items.length; i++){
+        onProgress?.(i + 1, items.length);
+        const it = items[i];
+        images.push({
+          url: await toDataUrl(it.video ? it.file : it.display),
+          type: it.video ? 'video' : 'image',
+          hasOrig: !it.video
+        });
       }
       const all = read();
       all.push({id:String(Date.now()), name, message, images, isPublic, createdAt:Date.now()});
@@ -380,26 +397,49 @@ function workerBackend(){
       const {items} = await res.json();
       return (items || []).map(normalise);
     },
-    async add({name, message, blobs, isPublic, onProgress}){
+    /* The Worker signs a one-off URL and the bytes go straight to R2, so
+       nothing large passes through the Worker itself. */
+    async put(blob, {contentType, isPublic, kind, ext}){
+      const sres = await fetch(`${api}/presign`, {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({contentType, isPublic, kind, ext})
+      });
+      if (!sres.ok) throw new Error(`presign ${sres.status}`);
+      const {uploadUrl, key} = await sres.json();
+
+      const put = await fetch(uploadUrl, {
+        method:'PUT', body: blob, headers:{'Content-Type':contentType}
+      });
+      if (!put.ok) throw new Error(`upload ${put.status}`);
+      return key;
+    },
+
+    async add({name, message, items, isPublic, onProgress}){
       const images = [];
-      for (let i = 0; i < blobs.length; i++){
-        onProgress?.(i + 1, blobs.length);
+      for (let i = 0; i < items.length; i++){
+        onProgress?.(i + 1, items.length);
+        const it = items[i];
 
-        /* The Worker signs a one-off URL and the photo goes straight to
-           R2, so the image bytes never pass through the Worker itself. */
-        const sres = await fetch(`${api}/presign`, {
-          method:'POST',
-          headers:{'Content-Type':'application/json'},
-          body: JSON.stringify({contentType:'image/jpeg', isPublic})
-        });
-        if (!sres.ok) throw new Error(`presign ${sres.status}`);
-        const {uploadUrl, key} = await sres.json();
-
-        const put = await fetch(uploadUrl, {
-          method:'PUT', body: blobs[i], headers:{'Content-Type':'image/jpeg'}
-        });
-        if (!put.ok) throw new Error(`upload ${put.status}`);
-        images.push({key});
+        if (it.video){
+          /* A video is served as it was filmed — there is no practical way
+             to transcode one in the browser, so it is its own original. */
+          const key = await this.put(it.file, {
+            contentType: it.file.type, isPublic, kind:'display', ext: extOf(it.file)
+          });
+          images.push({key, orig:'', type:'video'});
+        } else {
+          const key = await this.put(it.display, {
+            contentType:'image/jpeg', isPublic, kind:'display', ext:'jpg'
+          });
+          /* Originals are archived whatever the post's visibility, so the
+             feed can stay light without the full-size photo being lost. */
+          const orig = await this.put(it.file, {
+            contentType: it.file.type || 'application/octet-stream',
+            isPublic, kind:'original', ext: extOf(it.file)
+          });
+          images.push({key, orig, type:'image'});
+        }
       }
 
       const res = await fetch(`${api}/posts`, {
@@ -415,6 +455,13 @@ function workerBackend(){
 /* ---------------- image handling ---------------- */
 /* Phone photos are 3–5MB each; downscaling in the browser keeps the
    Firebase Storage bill and the visitor's upload time both small. */
+function extOf(file){
+  const m = /\.([a-z0-9]{1,5})$/i.exec(file.name || '');
+  if (m) return m[1].toLowerCase();
+  const sub = (file.type || '').split('/')[1] || '';
+  return /^[a-z0-9]{1,5}$/i.test(sub) ? sub.toLowerCase() : '';
+}
+
 async function compressImage(file){
   const bitmap = await createImageBitmap(file, {imageOrientation:'from-image'});
   const scale  = Math.min(1, MAX_DIM / Math.max(bitmap.width, bitmap.height));
@@ -456,7 +503,9 @@ function renderList(){
            full photo; the click handler takes over for the lightbox. */
         p.images.map((im, j) =>
           `<a class="rv-shot" href="${esc(im.url)}" data-p="${i}" data-i="${j}">
-             <img src="${esc(im.url)}" alt="" loading="lazy">
+             ${im.type === 'video'
+               ? `<video src="${esc(im.url)}" muted playsinline preload="metadata"></video><span class="rv-play">▶</span>`
+               : `<img src="${esc(im.url)}" alt="" loading="lazy">`}
            </a>`).join('')
       }</div>` : ''}
       ${p.message  ? `<div class="rv-body">${esc(p.message)}</div>` : ''}
@@ -469,18 +518,28 @@ function renderList(){
 
 /* ---------------- lightbox ---------------- */
 const $id = id => document.getElementById(id);
-const lb = $id('lb'), lbImg = $id('lb-img'), lbCount = $id('lb-count');
+const lb = $id('lb'), lbImg = $id('lb-img'), lbVid = $id('lb-vid'), lbCount = $id('lb-count');
 const lbPrev = $id('lb-prev'), lbNext = $id('lb-next');
 let lbShots = [], lbAt = 0;
 
 function lbPaint(){
-  lbImg.src = lbShots[lbAt];
+  const shot = lbShots[lbAt];
+  const video = shot.type === 'video';
+
+  /* Whichever is not on screen is emptied, so a video does not keep
+     playing after moving on to the next photo. */
+  lbVid.pause();
+  lbVid.hidden = !video;
+  lbImg.hidden = video;
+  if (video){ lbVid.src = shot.url; lbImg.removeAttribute('src'); }
+  else      { lbImg.src = shot.url; lbVid.removeAttribute('src'); }
+
   lbCount.textContent = `${lbAt + 1} / ${lbShots.length}`;
   const many = lbShots.length > 1;
   lbPrev.hidden = lbNext.hidden = lbCount.hidden = !many;
 }
-function lbOpen(urls, at){
-  lbShots = urls; lbAt = at;
+function lbOpen(shots, at){
+  lbShots = shots; lbAt = at;
   lbPaint();
   lb.hidden = false;
   document.body.classList.add('lb-open');
@@ -488,7 +547,9 @@ function lbOpen(urls, at){
 function lbClose(){
   lb.hidden = true;
   document.body.classList.remove('lb-open');
+  lbVid.pause();
   lbImg.removeAttribute('src');   /* stop the download if it is still going */
+  lbVid.removeAttribute('src');
 }
 function lbStep(d){
   lbAt = (lbAt + d + lbShots.length) % lbShots.length;
@@ -501,7 +562,7 @@ $id('rv-list').addEventListener('click', e => {
   const post = posts[Number(a.dataset.p)];
   if (!post) return;
   e.preventDefault();
-  lbOpen(post.images.map(im => im.url), Number(a.dataset.i));
+  lbOpen(post.images.map(im => ({url: im.url, type: im.type})), Number(a.dataset.i));
 });
 
 $id('lb-close').onclick = lbClose;
@@ -519,7 +580,10 @@ document.addEventListener('keydown', e => {
 
 /* Swiping is how a phone expects to move through photos. */
 let touchX = null;
-lb.addEventListener('touchstart', e => { touchX = e.changedTouches[0].clientX; }, {passive:true});
+lb.addEventListener('touchstart', e => {
+  /* Not while dragging a video's scrubber. */
+  touchX = e.target.closest('#lb-vid') ? null : e.changedTouches[0].clientX;
+}, {passive:true});
 lb.addEventListener('touchend', e => {
   if (touchX === null || lbShots.length < 2) return;
   const dx = e.changedTouches[0].clientX - touchX;
@@ -564,10 +628,12 @@ fileInput.onchange = () => {
 
   const skipped = [];
   for (const f of chosen){
-    if (!f.type.startsWith('image/')){ skipped.push(T.notImage); continue; }
-    if (f.size > MAX_FILE_BYTES){      skipped.push(T.tooBig);   continue; }
-    if (picked.length >= MAX_FILES){   skipped.push(T.tooMany);  break;    }
-    picked.push({id:++pickSeq, file:f, url:URL.createObjectURL(f)});
+    const video = f.type.startsWith('video/');
+    const image = f.type.startsWith('image/');
+    if (!video && !image){ skipped.push(T.notImage); continue; }
+    if (f.size > (video ? MAX_VIDEO_BYTES : MAX_IMAGE_BYTES)){ skipped.push(T.tooBig); continue; }
+    if (picked.length >= MAX_FILES){ skipped.push(T.tooMany); break; }
+    picked.push({id:++pickSeq, file:f, video, url:URL.createObjectURL(f)});
   }
   renderThumbs();
 
@@ -579,7 +645,8 @@ fileInput.onchange = () => {
 function renderThumbs(){
   thumbsEl.innerHTML = picked.map(p => `
     <div class="rv-thumb">
-      <img src="${p.url}" alt="">
+      ${p.video ? `<video src="${p.url}" muted playsinline preload="metadata"></video>`
+                : `<img src="${p.url}" alt="">`}
       <button type="button" data-id="${p.id}" aria-label="remove">×</button>
     </div>`).join('');
   thumbsEl.querySelectorAll('button').forEach(b => {
@@ -622,12 +689,19 @@ document.getElementById('rv-form').onsubmit = async (e) => {
   submitEl.disabled = true;
   showStatus(t(picked.length ? T.prepping : T.posting));
   try {
-    const blobs = [];
-    for (const p of picked) blobs.push(await compressImage(p.file));
+    /* Only the feed copy is downscaled; p.file stays the untouched original. */
+    const items = [];
+    for (const p of picked){
+      items.push({
+        file: p.file,
+        video: p.video,
+        display: p.video ? null : await compressImage(p.file)
+      });
+    }
 
     const wasPublic = isPublic;
     await backend.add({
-      name, message, blobs, isPublic,
+      name, message, items, isPublic,
       onProgress: (n, total) => showStatus(total > 1 ? `${t(T.posting)} ${n}/${total}` : t(T.posting))
     });
 

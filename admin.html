@@ -66,8 +66,10 @@ body{font-family:var(--sans);color:var(--red);background:var(--paper);line-heigh
 .post{padding:18px 0;}
 .shots{display:grid;gap:7px;}
 .shots.multi{grid-template-columns:repeat(2,1fr);}
-.shots img{display:block;width:100%;border:2px solid var(--red);background:var(--lime-deep);}
-.shots.multi img{aspect-ratio:1;object-fit:cover;}
+.shots img,.shots video{display:block;width:100%;border:2px solid var(--red);background:var(--lime-deep);}
+.shots.multi img,.shots.multi video{aspect-ratio:1;object-fit:cover;}
+.origlink{display:block;text-align:center;font-size:11px;font-weight:700;color:var(--red);
+  text-decoration:underline;text-underline-offset:2px;margin-top:5px;}
 .post .body{font-size:14px;line-height:1.8;font-weight:500;white-space:pre-wrap;overflow-wrap:anywhere;margin-top:12px;}
 .post .meta{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;margin-top:10px;}
 .post .who{font-weight:900;font-size:13px;}
@@ -164,7 +166,15 @@ function render(){
     ${i ? '<div class="rule"></div>' : ''}
     <div class="post">
       ${p.images.length ? `<div class="shots${p.images.length > 1 ? ' multi' : ''}">${
-        p.images.map(im => `<a href="${esc(im.url)}" target="_blank" rel="noopener"><img src="${esc(im.url)}" alt="" loading="lazy"></a>`).join('')
+        p.images.map(im => `
+          <div class="shot">
+            <a href="${esc(im.url)}" target="_blank" rel="noopener">
+              ${im.type === 'video'
+                ? `<video src="${esc(im.url)}" controls playsinline preload="metadata"></video>`
+                : `<img src="${esc(im.url)}" alt="" loading="lazy">`}
+            </a>
+            ${im.origUrl ? `<a class="origlink" href="${esc(im.origUrl)}" download target="_blank" rel="noopener">원본 내려받기 ↓</a>` : ''}
+          </div>`).join('')
       }</div>` : ''}
       ${p.message ? `<div class="body">${esc(p.message)}</div>` : ''}
       <div class="meta">

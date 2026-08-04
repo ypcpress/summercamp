@@ -53,6 +53,10 @@ const MAX_NAME    = 20;
 const MAX_IMAGES  = 10;
 const PAGE_SIZE   = 200;
 
+// Originals are kept under this prefix, always in the bucket with no
+// public access. The feed is served the downscaled copy instead.
+const ORIG_PREFIX = 'orig/';
+
 /* ---------------- CORS ---------------- */
 function corsHeaders(origin) {
   const allowOrigin = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
@@ -167,28 +171,51 @@ function rowToPost(row, publicBase) {
     message: row.message || '',
     isPublic,
     createdAt: row.created_at,
-    // Public photos are served straight from the bucket's public URL.
-    // Private ones carry only a key here; /admin/posts signs them.
+    // Public media is served straight from the bucket's public URL.
+    // Private media carries only a key here; /admin/posts signs it.
     images: images.map((im) => ({
       key: im.key,
+      orig: im.orig || '',
+      type: im.type === 'video' ? 'video' : 'image',
       url: isPublic && publicBase ? `${publicBase.replace(/\/$/, '')}/${im.key}` : '',
     })),
   };
 }
 
+// The original's key is only ever useful alongside a signature, so it does
+// not travel with the public feed.
+function stripOrig(post) {
+  return {
+    ...post,
+    images: post.images.map(({ orig, ...rest }) => ({ ...rest, hasOrig: !!orig })),
+  };
+}
+
 /* ---------------- endpoints ---------------- */
 
-// Hand back a URL the browser can PUT one photo to. The bucket depends on
-// the post's visibility, so a private photo never lands in the bucket that
-// is readable by anyone.
+// Hand back a URL the browser can PUT one file to. A display copy follows
+// the post's visibility, so a private one never lands in the bucket that is
+// readable by anyone. An original is an archive copy and always goes to the
+// private bucket, whatever the post's visibility.
+//
+// Size is not checked here: with a presigned PUT the bytes go straight to
+// R2 and never reach this Worker, so the browser is the only place that can
+// hold the line.
 async function handlePresign(request, env, origin) {
-  const { contentType, isPublic } = await request.json();
-  if (!contentType || !/^image\//.test(contentType)) {
-    return json({ error: 'image contentType required' }, origin, 400);
+  const { contentType, isPublic, kind, ext } = await request.json();
+  const isVideo = /^video\//.test(contentType || '');
+  if (!contentType || !(isVideo || /^image\//.test(contentType))) {
+    return json({ error: 'image or video contentType required' }, origin, 400);
   }
-  const pub = isPublic !== false;
-  const key = `${Date.now()}-${crypto.randomUUID().slice(0, 8)}.jpg`;
-  const uploadUrl = await presignUrl(env, 'PUT', objectUri(bucketFor(env, pub), key), {});
+
+  const original = kind === 'original';
+  const safeExt = /^[a-z0-9]{1,5}$/i.test(ext || '') ? ext.toLowerCase() : (isVideo ? 'mp4' : 'jpg');
+  const stem = `${Date.now()}-${crypto.randomUUID().slice(0, 8)}`;
+
+  const bucket = original ? env.R2_BUCKET_PRIVATE : bucketFor(env, isPublic !== false);
+  const key = original ? `${ORIG_PREFIX}${stem}.${safeExt}` : `${stem}.${safeExt}`;
+
+  const uploadUrl = await presignUrl(env, 'PUT', objectUri(bucket, key), {});
   return json({ uploadUrl, key }, origin);
 }
 
@@ -200,8 +227,15 @@ async function handleCreatePost(request, env, origin) {
 
   const images = (Array.isArray(body.images) ? body.images : [])
     .slice(0, MAX_IMAGES)
-    .map((im) => ({ key: String(im && im.key || '') }))
-    .filter((im) => im.key && !im.key.includes('/'));
+    .map((im) => ({
+      key: String((im && im.key) || ''),
+      orig: String((im && im.orig) || ''),
+      type: (im && im.type) === 'video' ? 'video' : 'image',
+    }))
+    .filter((im) => im.key && !im.key.includes('/'))
+    // A malformed original reference is dropped on its own rather than
+    // taking the whole upload down with it.
+    .map((im) => ({ ...im, orig: /^orig\/[^/]+$/.test(im.orig) ? im.orig : '' }));
 
   if (!message && !images.length) {
     return json({ error: 'message or images required' }, origin, 400);
@@ -219,7 +253,8 @@ async function handleListPublic(env, origin) {
   const { results } = await env.DB.prepare(
     'SELECT * FROM posts WHERE is_public = 1 ORDER BY created_at DESC LIMIT ?'
   ).bind(PAGE_SIZE).all();
-  return json({ items: (results || []).map((r) => rowToPost(r, env.R2_PUBLIC_BASE_URL)) }, origin);
+  const items = (results || []).map((r) => stripOrig(rowToPost(r, env.R2_PUBLIC_BASE_URL)));
+  return json({ items }, origin);
 }
 
 async function handleListAdmin(env, origin) {
@@ -229,12 +264,17 @@ async function handleListAdmin(env, origin) {
 
   const items = (results || []).map((r) => rowToPost(r, env.R2_PUBLIC_BASE_URL));
 
-  // Private photos live in a bucket with no public access, so they need a
-  // short-lived signed URL. One signature each, no network round trip.
+  // Anything in the private bucket needs a short-lived signed URL — the
+  // display copy of a private post, and every original. One signature
+  // each, no network round trip.
   await Promise.all(items.map(async (p) => {
-    if (p.isPublic) return;
     await Promise.all(p.images.map(async (im) => {
-      im.url = await presignUrl(env, 'GET', objectUri(env.R2_BUCKET_PRIVATE, im.key), {}, 3600);
+      if (!p.isPublic) {
+        im.url = await presignUrl(env, 'GET', objectUri(env.R2_BUCKET_PRIVATE, im.key), {}, 3600);
+      }
+      if (im.orig) {
+        im.origUrl = await presignUrl(env, 'GET', objectUri(env.R2_BUCKET_PRIVATE, im.orig), {}, 3600);
+      }
     }));
   }));
 
@@ -252,15 +292,21 @@ async function handleDelete(request, env, origin) {
 
   const post = rowToPost(row, env.R2_PUBLIC_BASE_URL);
   const bucket = bucketFor(env, post.isPublic);
-  await Promise.all(post.images.map(async (im) => {
+
+  const drop = async (b, key) => {
     try {
-      const url = await presignUrl(env, 'DELETE', objectUri(bucket, im.key), {});
+      const url = await presignUrl(env, 'DELETE', objectUri(b, key), {});
       await fetch(url, { method: 'DELETE' });
     } catch (e) {
       // A missing object should not block removing the post itself.
-      console.error('delete photo', im.key, e);
+      console.error('delete object', key, e);
     }
-  }));
+  };
+
+  await Promise.all(post.images.flatMap((im) => [
+    drop(bucket, im.key),
+    ...(im.orig ? [drop(env.R2_BUCKET_PRIVATE, im.orig)] : []),
+  ]));
 
   await env.DB.prepare('DELETE FROM posts WHERE id = ?').bind(id).run();
   return json({ ok: true }, origin);
