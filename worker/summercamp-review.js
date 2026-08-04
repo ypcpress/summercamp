@@ -60,7 +60,7 @@ const ORIG_PREFIX = 'orig/';
 // This file is a copy of what runs; editing it does not deploy anything.
 // Bump this whenever the file changes, so GET /version tells you whether
 // the code in the dashboard is the code you are reading.
-const VERSION = '2026-08-04 · originals + video';
+const VERSION = '2026-08-04b · originals + video + posters';
 
 /* ---------------- CORS ---------------- */
 function corsHeaders(origin) {
@@ -181,8 +181,13 @@ function rowToPost(row, publicBase) {
     images: images.map((im) => ({
       key: im.key,
       orig: im.orig || '',
+      // A still captured from the video at upload time. It sits beside the
+      // display copy, so it follows the same visibility.
+      poster: im.poster || '',
       type: im.type === 'video' ? 'video' : 'image',
       url: isPublic && publicBase ? `${publicBase.replace(/\/$/, '')}/${im.key}` : '',
+      posterUrl: im.poster && isPublic && publicBase
+        ? `${publicBase.replace(/\/$/, '')}/${im.poster}` : '',
     })),
   };
 }
@@ -237,9 +242,11 @@ async function handleCreatePost(request, env, origin) {
     .map((im) => ({
       key: String((im && im.key) || ''),
       orig: String((im && im.orig) || ''),
+      poster: String((im && im.poster) || ''),
       type: (im && im.type) === 'video' ? 'video' : 'image',
     }))
     .filter((im) => im.key && !im.key.includes('/'))
+    .map((im) => ({ ...im, poster: im.poster.includes('/') ? '' : im.poster }))
     // A malformed original reference is dropped on its own rather than
     // taking the whole upload down with it.
     .map((im) => ({ ...im, orig: /^orig\/[^/]+$/.test(im.orig) ? im.orig : '' }));
@@ -278,6 +285,9 @@ async function handleListAdmin(env, origin) {
     await Promise.all(p.images.map(async (im) => {
       if (!p.isPublic) {
         im.url = await presignUrl(env, 'GET', objectUri(env.R2_BUCKET_PRIVATE, im.key), {}, 3600);
+        if (im.poster) {
+          im.posterUrl = await presignUrl(env, 'GET', objectUri(env.R2_BUCKET_PRIVATE, im.poster), {}, 3600);
+        }
       }
       if (im.orig) {
         im.origUrl = await presignUrl(env, 'GET', objectUri(env.R2_BUCKET_PRIVATE, im.orig), {}, 3600);
@@ -312,6 +322,7 @@ async function handleDelete(request, env, origin) {
 
   await Promise.all(post.images.flatMap((im) => [
     drop(bucket, im.key),
+    ...(im.poster ? [drop(bucket, im.poster)] : []),
     ...(im.orig ? [drop(env.R2_BUCKET_PRIVATE, im.orig)] : []),
   ]));
 

@@ -359,6 +359,7 @@ function demoBackend(){
         const it = items[i];
         images.push({
           url: await toDataUrl(it.video ? it.file : it.display),
+          posterUrl: it.poster ? await toDataUrl(it.poster) : '',
           type: it.video ? 'video' : 'image',
           hasOrig: !it.video
         });
@@ -427,7 +428,12 @@ function workerBackend(){
           const key = await this.put(it.file, {
             contentType: it.file.type, isPublic, kind:'display', ext: extOf(it.file)
           });
-          images.push({key, orig:'', type:'video'});
+          /* The still rides alongside the video so the feed can show a
+             thumbnail without downloading any of it. */
+          const poster = it.poster ? await this.put(it.poster, {
+            contentType:'image/jpeg', isPublic, kind:'display', ext:'jpg'
+          }) : '';
+          images.push({key, orig:'', poster, type:'video'});
         } else {
           const key = await this.put(it.display, {
             contentType:'image/jpeg', isPublic, kind:'display', ext:'jpg'
@@ -460,6 +466,45 @@ function extOf(file){
   if (m) return m[1].toLowerCase();
   const sub = (file.type || '').split('/')[1] || '';
   return /^[a-z0-9]{1,5}$/i.test(sub) ? sub.toLowerCase() : '';
+}
+
+/* Grab a still from the start of a video to use as its thumbnail. Without
+   one the feed has to pull video data just to paint a frame, and several
+   browsers show nothing but a black box anyway. Returns null if the
+   browser cannot decode the file — the feed falls back to a media
+   fragment in that case. */
+function videoPoster(file){
+  return new Promise(resolve => {
+    const v = document.createElement('video');
+    const url = URL.createObjectURL(file);
+    let settled = false;
+    const finish = blob => {
+      if (settled) return;
+      settled = true;
+      URL.revokeObjectURL(url);
+      resolve(blob);
+    };
+
+    v.muted = true; v.playsInline = true; v.preload = 'metadata';
+    v.onloadeddata = () => {
+      try { v.currentTime = Math.min(0.1, (v.duration || 1) / 2); }
+      catch (e){ finish(null); }
+    };
+    v.onseeked = () => {
+      try {
+        const scale = Math.min(1, MAX_DIM / Math.max(v.videoWidth, v.videoHeight));
+        const c = document.createElement('canvas');
+        c.width  = Math.round(v.videoWidth  * scale);
+        c.height = Math.round(v.videoHeight * scale);
+        c.getContext('2d').drawImage(v, 0, 0, c.width, c.height);
+        c.toBlob(finish, 'image/jpeg', JPEG_QUALITY);
+      } catch (e){ finish(null); }
+    };
+    v.onerror = () => finish(null);
+    /* A codec the browser will not decode must not hold up the post. */
+    setTimeout(() => finish(null), 8000);
+    v.src = url;
+  });
 }
 
 async function compressImage(file){
@@ -504,7 +549,14 @@ function renderList(){
         p.images.map((im, j) =>
           `<a class="rv-shot" href="${esc(im.url)}" data-p="${i}" data-i="${j}">
              ${im.type === 'video'
-               ? `<video src="${esc(im.url)}" muted playsinline preload="metadata"></video><span class="rv-play">▶</span>`
+               /* With a still there is no reason to touch the video here.
+                  Without one — anything posted before posters existed —
+                  #t=0.1 nudges the browser into painting a frame, which
+                  preload alone does not do on several of them. */
+               ? (im.posterUrl
+                   ? `<video src="${esc(im.url)}" poster="${esc(im.posterUrl)}" muted playsinline preload="none"></video>`
+                   : `<video src="${esc(im.url)}#t=0.1" muted playsinline preload="metadata"></video>`
+                 ) + `<span class="rv-play">▶</span>`
                : `<img src="${esc(im.url)}" alt="" loading="lazy">`}
            </a>`).join('')
       }</div>` : ''}
@@ -645,7 +697,7 @@ fileInput.onchange = () => {
 function renderThumbs(){
   thumbsEl.innerHTML = picked.map(p => `
     <div class="rv-thumb">
-      ${p.video ? `<video src="${p.url}" muted playsinline preload="metadata"></video>`
+      ${p.video ? `<video src="${p.url}#t=0.1" muted playsinline preload="metadata"></video>`
                 : `<img src="${p.url}" alt="">`}
       <button type="button" data-id="${p.id}" aria-label="remove">×</button>
     </div>`).join('');
@@ -695,7 +747,8 @@ document.getElementById('rv-form').onsubmit = async (e) => {
       items.push({
         file: p.file,
         video: p.video,
-        display: p.video ? null : await compressImage(p.file)
+        display: p.video ? null : await compressImage(p.file),
+        poster: p.video ? await videoPoster(p.file) : null
       });
     }
 

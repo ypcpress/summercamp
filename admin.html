@@ -170,7 +170,9 @@ function render(){
           <div class="shot">
             <a href="${esc(im.url)}" target="_blank" rel="noopener">
               ${im.type === 'video'
-                ? `<video src="${esc(im.url)}" controls playsinline preload="metadata"></video>`
+                ? (im.posterUrl
+                    ? `<video src="${esc(im.url)}" poster="${esc(im.posterUrl)}" controls playsinline preload="none"></video>`
+                    : `<video src="${esc(im.url)}#t=0.1" controls playsinline preload="metadata"></video>`)
                 : `<img src="${esc(im.url)}" alt="" loading="lazy">`}
             </a>
             ${im.origUrl ? `<a class="origlink" href="${esc(im.origUrl)}" download target="_blank" rel="noopener">원본 내려받기 ↓</a>` : ''}
