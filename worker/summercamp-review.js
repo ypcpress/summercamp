@@ -57,6 +57,11 @@ const PAGE_SIZE   = 200;
 // public access. The feed is served the downscaled copy instead.
 const ORIG_PREFIX = 'orig/';
 
+// This file is a copy of what runs; editing it does not deploy anything.
+// Bump this whenever the file changes, so GET /version tells you whether
+// the code in the dashboard is the code you are reading.
+const VERSION = '2026-08-04b · originals + video + posters';
+
 /* ---------------- CORS ---------------- */
 function corsHeaders(origin) {
   const allowOrigin = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
@@ -176,8 +181,13 @@ function rowToPost(row, publicBase) {
     images: images.map((im) => ({
       key: im.key,
       orig: im.orig || '',
+      // A still captured from the video at upload time. It sits beside the
+      // display copy, so it follows the same visibility.
+      poster: im.poster || '',
       type: im.type === 'video' ? 'video' : 'image',
       url: isPublic && publicBase ? `${publicBase.replace(/\/$/, '')}/${im.key}` : '',
+      posterUrl: im.poster && isPublic && publicBase
+        ? `${publicBase.replace(/\/$/, '')}/${im.poster}` : '',
     })),
   };
 }
@@ -215,7 +225,9 @@ async function handlePresign(request, env, origin) {
   const bucket = original ? env.R2_BUCKET_PRIVATE : bucketFor(env, isPublic !== false);
   const key = original ? `${ORIG_PREFIX}${stem}.${safeExt}` : `${stem}.${safeExt}`;
 
-  const uploadUrl = await presignUrl(env, 'PUT', objectUri(bucket, key), {});
+  // An hour, not the default ten minutes: a 100MB video over mobile data
+  // can outlast a short-lived signature and fail at the very end.
+  const uploadUrl = await presignUrl(env, 'PUT', objectUri(bucket, key), {}, 3600);
   return json({ uploadUrl, key }, origin);
 }
 
@@ -230,9 +242,11 @@ async function handleCreatePost(request, env, origin) {
     .map((im) => ({
       key: String((im && im.key) || ''),
       orig: String((im && im.orig) || ''),
+      poster: String((im && im.poster) || ''),
       type: (im && im.type) === 'video' ? 'video' : 'image',
     }))
     .filter((im) => im.key && !im.key.includes('/'))
+    .map((im) => ({ ...im, poster: im.poster.includes('/') ? '' : im.poster }))
     // A malformed original reference is dropped on its own rather than
     // taking the whole upload down with it.
     .map((im) => ({ ...im, orig: /^orig\/[^/]+$/.test(im.orig) ? im.orig : '' }));
@@ -271,6 +285,9 @@ async function handleListAdmin(env, origin) {
     await Promise.all(p.images.map(async (im) => {
       if (!p.isPublic) {
         im.url = await presignUrl(env, 'GET', objectUri(env.R2_BUCKET_PRIVATE, im.key), {}, 3600);
+        if (im.poster) {
+          im.posterUrl = await presignUrl(env, 'GET', objectUri(env.R2_BUCKET_PRIVATE, im.poster), {}, 3600);
+        }
       }
       if (im.orig) {
         im.origUrl = await presignUrl(env, 'GET', objectUri(env.R2_BUCKET_PRIVATE, im.orig), {}, 3600);
@@ -305,6 +322,7 @@ async function handleDelete(request, env, origin) {
 
   await Promise.all(post.images.flatMap((im) => [
     drop(bucket, im.key),
+    ...(im.poster ? [drop(bucket, im.poster)] : []),
     ...(im.orig ? [drop(env.R2_BUCKET_PRIVATE, im.orig)] : []),
   ]));
 
@@ -323,6 +341,9 @@ export default {
     }
 
     try {
+      if (request.method === 'GET' && pathname === '/version') {
+        return json({ version: VERSION }, origin);
+      }
       if (request.method === 'GET' && (pathname === '/posts' || pathname === '/')) {
         return await handleListPublic(env, origin);
       }
