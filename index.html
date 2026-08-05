@@ -216,6 +216,8 @@ button.stitle{font-family:var(--sans);color:var(--red);background:none;border:no
       <button class="pill" data-nav="program" onclick="go('program')"><span class="only-ko">프로그램</span><span class="only-en">Program</span></button>
       <button class="pill" data-nav="venue" onclick="go('venue')"><span class="only-ko">장소</span><span class="only-en">Venue</span></button>
       <button class="pill" data-nav="info" onclick="go('info')"><span class="only-ko">안내</span><span class="only-en">Info</span></button>
+      <!-- Its own page rather than a view, so it carries the language over. -->
+      <button class="pill" onclick="goReview()"><span class="only-ko">후기</span><span class="only-en">Notes</span></button>
     </nav>
     <div class="rule rule-bigdot" style="margin:0 7px;"></div>
   </div>
@@ -420,8 +422,16 @@ button.stitle{font-family:var(--sans);color:var(--red);background:none;border:no
 /* ---------------- language ---------------- */
 let lang='ko';
 function t(o){ return (o && typeof o==='object' && 'ko' in o) ? (o[lang] ?? o.ko) : o; }
+/* The review page is a separate document, so the choice is parked where
+   both can read it rather than being lost on the way over. */
+const LANG_KEY='sc-lang';
+function storedLang(){
+  try{ const v=sessionStorage.getItem(LANG_KEY); return v==='en'||v==='ko' ? v : 'ko'; }
+  catch(e){ return 'ko'; }
+}
 function setLang(l){
   lang=l;
+  try{ sessionStorage.setItem(LANG_KEY, l); }catch(e){}
   document.body.classList.toggle('lang-ko', l==='ko');
   document.body.classList.toggle('lang-en', l==='en');
   document.documentElement.lang=l;
@@ -429,6 +439,7 @@ function setLang(l){
   renderSchedule(); renderPrograms(); renderVenues(); renderDonors();
   if(currentProgram) renderDetail();
 }
+function goReview(){ location.href='review.html'; }
 
 /* ---------------- routing ---------------- */
 /* Embedded in an auto-height iframe our own window never scrolls — the
@@ -464,7 +475,7 @@ window.addEventListener('DOMContentLoaded',()=>{
   const totop=document.getElementById('totop');
   totop.onclick=()=>window.scrollTo({top:0,behavior:'smooth'});
   window.addEventListener('scroll',()=>totop.classList.toggle('show', window.scrollY>320), {passive:true});
-  setLang('ko');
+  setLang(storedLang());
   const h=location.hash.replace('#','');
   if(h.startsWith('p-')) goProgram(h.slice(2));
   else if(['about','schedule','program','venue','info','donors'].includes(h)) go(h);
