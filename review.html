@@ -1,0 +1,803 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#d4f20c">
+<title>서머캠프 후기 | Summer Camp Notes</title>
+<meta name="description" content="2026 서머캠프 〈섬과 다리〉 후기 · 사진과 이야기를 남겨주세요">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=Noto+Sans:ital,wght@0,400;0,700;0,800;1,700;1,800&display=swap" rel="stylesheet">
+<style>
+/* =========================================================
+   2026 Summer Camp — 서머캠프 후기 (preview page)
+   Design tokens and components mirror index.html so this can be
+   folded back in as a normal view once the feature is approved.
+   ========================================================= */
+:root{
+  --lime:#CCFF00;
+  --lime-deep:#c2e00a;
+  --red:#fb2b06;
+  --paper:#ffffff;
+
+  --header-h:102px;
+  --sans:'Noto Sans KR','Noto Sans',-apple-system,BlinkMacSystemFont,system-ui,'Apple SD Gothic Neo','Malgun Gothic',sans-serif;
+  --sans-latin:'Noto Sans','Noto Sans KR',-apple-system,BlinkMacSystemFont,system-ui,sans-serif;
+
+  --clip:polygon(
+    46px 2px,
+    calc(100% - 22px) 15px,
+    100% 86px,
+    calc(100% - 3px) calc(100% - 104px),
+    calc(100% - 58px) 100%,
+    52px calc(100% - 13px),
+    2px calc(100% - 74px),
+    7px 64px
+  );
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+/* Author display rules outrank the UA stylesheet's [hidden], so any
+   element given a display here would ignore the attribute without this. */
+[hidden]{display:none !important;}
+body{font-family:var(--sans);color:var(--red);background:var(--paper);line-height:1.6;font-weight:500;-webkit-font-smoothing:antialiased;}
+#app{max-width:480px;margin:0 auto;position:relative;background:var(--paper);}
+@media(min-width:520px){body{padding:20px 0;}#app{box-shadow:0 0 0 1px #f0f0f0;}}
+
+body.lang-ko .only-en{display:none;}
+body.lang-en .only-ko{display:none;}
+
+.rule{height:0;border-top:1px solid var(--red);flex:0 0 auto;}
+
+/* ---------------- fixed header ---------------- */
+.appheader{position:fixed;top:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;z-index:60;background:var(--paper);}
+.topmask{display:none;}
+@media(min-width:520px){
+  .appheader{top:20px;}
+  .topmask{display:block;position:fixed;top:0;left:0;right:0;height:20px;background:var(--paper);z-index:61;}
+}
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 16px 9px;}
+.brand{display:flex;flex-direction:column;line-height:1.15;cursor:pointer;}
+.brand b{font-weight:900;font-size:14px;letter-spacing:-.01em;}
+.brand span{font-family:var(--sans-latin);font-style:italic;font-weight:700;font-size:10px;opacity:.8;}
+.langtoggle{display:flex;border:2px solid var(--red);border-radius:100px;overflow:hidden;flex:0 0 auto;}
+.lg{border:none;background:var(--paper);font-family:var(--sans-latin);font-size:11px;font-weight:800;letter-spacing:.04em;padding:5px 11px;cursor:pointer;color:var(--red);line-height:1.2;}
+.lg.active{background:var(--red);color:var(--lime);}
+.pillnav{display:flex;gap:6px;overflow-x:auto;padding:4px 16px 11px;scrollbar-width:none;}
+.pillnav::-webkit-scrollbar{display:none;}
+.pill{flex:0 0 auto;border:2px solid var(--red);background:var(--paper);border-radius:100px;padding:6px 15px;font-family:var(--sans);font-weight:700;font-size:13px;cursor:pointer;color:var(--red);white-space:nowrap;}
+.pill:hover{background:var(--lime);}
+.pill.active{background:var(--red);color:var(--lime);}
+
+/* ---------------- sheet ---------------- */
+.view{padding:var(--header-h) 7px 76px;}
+.sheet{background:var(--lime);clip-path:var(--clip);padding:52px 22px 60px;min-height:560px;}
+.pagetitle{text-align:center;font-weight:900;font-size:clamp(26px,8vw,34px);letter-spacing:-.02em;margin-bottom:6px;}
+.para{font-size:14px;line-height:1.8;font-weight:500;margin:13px 0;}
+.sectlabel{text-align:center;font-weight:900;font-size:15px;padding:10px 4px;}
+.applybtn{display:flex;align-items:center;justify-content:center;gap:8px;width:fit-content;margin:22px auto 0;
+  background:var(--red);color:var(--lime);border:2px solid var(--red);border-radius:100px;
+  font-family:var(--sans);font-weight:800;font-size:15px;text-decoration:none;padding:13px 20px;cursor:pointer;}
+.applybtn:hover{background:var(--lime);color:var(--red);}
+.applybtn:disabled{opacity:.4;cursor:default;background:var(--red);color:var(--lime);}
+
+/* ---------------- footer / to-top ---------------- */
+.foot{text-align:center;padding:26px 0 6px;}
+.foot .mk{font-weight:900;font-size:16px;}
+.foot .dt{font-family:var(--sans-latin);font-style:italic;font-weight:700;font-size:12.5px;margin-top:5px;}
+.foot .host{font-weight:700;font-size:11px;letter-spacing:.1em;margin-top:9px;text-transform:uppercase;}
+.totop{position:fixed;bottom:18px;right:14px;z-index:55;width:42px;height:42px;border-radius:100px;border:2px solid var(--red);background:var(--lime);cursor:pointer;display:none;align-items:center;justify-content:center;}
+.totop.show{display:flex;}
+.totop svg{width:18px;height:18px;stroke:var(--red);fill:none;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round;}
+@media(min-width:520px){.totop{right:calc(50vw - 240px + 14px);}}
+
+/* ---------------- 서머캠프 후기 ---------------- */
+.rv-banner{border:2px dashed var(--red);border-radius:12px;padding:11px 13px;margin:14px 0 0;font-size:12.5px;font-weight:700;line-height:1.6;}
+.rv-form{border:2px solid var(--red);border-radius:14px;padding:15px 15px 17px;margin:16px 0 6px;}
+.rv-row{margin-bottom:14px;}
+.rv-row:last-child{margin-bottom:0;}
+.rv-label{font-weight:900;font-size:13px;margin-bottom:7px;}
+.rv-label .opt{font-weight:700;font-size:11px;opacity:.7;margin-left:5px;}
+.rv-input,.rv-textarea{width:100%;font-family:var(--sans);font-weight:500;font-size:14px;color:var(--red);
+  background:var(--paper);border:2px solid var(--red);border-radius:10px;padding:10px 12px;line-height:1.6;}
+.rv-input::placeholder,.rv-textarea::placeholder{color:var(--red);opacity:.42;}
+.rv-input:focus,.rv-textarea:focus{outline:none;box-shadow:inset 0 0 0 2px var(--red);}
+.rv-textarea{min-height:104px;resize:vertical;display:block;}
+.rv-count{text-align:right;font-family:var(--sans-latin);font-size:11px;font-weight:700;opacity:.7;margin-top:4px;}
+.rv-file{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none;}
+.rv-filebtn{display:inline-flex;align-items:center;gap:7px;border:2px solid var(--red);background:transparent;color:var(--red);
+  font-family:var(--sans);font-weight:700;font-size:13px;border-radius:100px;padding:8px 15px;cursor:pointer;}
+.rv-filebtn:hover{background:var(--red);color:var(--lime);}
+.rv-thumbs{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:12px;}
+.rv-thumbs:empty{display:none;}
+.rv-thumb{position:relative;}
+.rv-thumb img,.rv-thumb video{display:block;width:100%;aspect-ratio:1;object-fit:cover;border:2px solid var(--red);background:var(--lime-deep);}
+.rv-thumb button{position:absolute;top:4px;right:4px;width:24px;height:24px;border-radius:100px;
+  border:2px solid var(--red);background:var(--paper);color:var(--red);font-weight:900;font-size:13px;cursor:pointer;line-height:1;
+  display:flex;align-items:center;justify-content:center;padding:0;}
+.rv-seg{display:flex;border:2px solid var(--red);border-radius:100px;overflow:hidden;}
+.rv-segbtn{flex:1;border:none;background:var(--paper);color:var(--red);font-family:var(--sans);
+  font-weight:700;font-size:13px;padding:10px 8px;cursor:pointer;line-height:1.3;}
+.rv-segbtn.active{background:var(--red);color:var(--lime);}
+.rv-seghint{font-size:12px;font-weight:700;line-height:1.6;opacity:.8;margin-top:8px;}
+.rv-note{font-size:12px;font-weight:700;line-height:1.6;opacity:.8;margin-top:9px;}
+.rv-status{font-size:12.5px;font-weight:700;line-height:1.6;margin-top:12px;text-align:center;}
+.rv-status.err{color:#8a0f00;}
+
+.rv-post{padding:18px 0;}
+.rv-shots{display:grid;gap:7px;}
+.rv-shots.multi{grid-template-columns:repeat(2,1fr);}
+.rv-shots a{display:block;}
+.rv-shots img,.rv-shots video{display:block;width:100%;border:2px solid var(--red);background:var(--lime-deep);}
+.rv-shots.multi img,.rv-shots.multi video{aspect-ratio:1;object-fit:cover;}
+.rv-shots a{position:relative;}
+.rv-play{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+  width:44px;height:44px;border-radius:100px;border:2px solid var(--red);background:var(--paper);
+  color:var(--red);font-size:15px;display:flex;align-items:center;justify-content:center;
+  padding-left:3px;pointer-events:none;}
+.rv-post .rv-body{font-size:14px;line-height:1.8;font-weight:500;white-space:pre-wrap;overflow-wrap:anywhere;margin-top:12px;}
+.rv-post .rv-meta{display:flex;flex-wrap:wrap;gap:5px 10px;align-items:baseline;margin-top:10px;}
+.rv-post .rv-who{font-weight:900;font-size:13px;}
+.rv-post .rv-when{font-family:var(--sans-latin);font-weight:700;font-size:11px;opacity:.7;}
+.rv-empty{font-size:13.5px;font-weight:700;line-height:1.75;padding:26px 0;text-align:center;}
+
+/* ---------------- lightbox ---------------- */
+.lb{position:fixed;inset:0;z-index:200;background:rgba(18,18,18,.94);
+  display:flex;align-items:center;justify-content:center;padding:60px 14px;}
+.lb-img{max-width:100%;max-height:100%;object-fit:contain;display:block;
+  border:2px solid var(--red);background:var(--lime-deep);}
+.lb-btn{position:absolute;border:2px solid var(--red);background:var(--paper);color:var(--red);
+  border-radius:100px;cursor:pointer;font-family:var(--sans-latin);font-weight:800;line-height:1;
+  display:flex;align-items:center;justify-content:center;padding:0;}
+.lb-btn:hover{background:var(--red);color:var(--lime);}
+.lb-close{top:14px;right:14px;width:40px;height:40px;font-size:19px;}
+.lb-prev,.lb-next{top:50%;transform:translateY(-50%);width:40px;height:40px;font-size:17px;}
+.lb-prev{left:14px;}
+.lb-next{right:14px;}
+.lb-count{position:absolute;bottom:16px;left:50%;transform:translateX(-50%);
+  background:var(--paper);color:var(--red);border:2px solid var(--red);border-radius:100px;
+  padding:4px 14px;font-family:var(--sans-latin);font-weight:800;font-size:12px;}
+body.lb-open{overflow:hidden;}
+</style>
+</head>
+<body class="lang-ko">
+<div class="topmask"></div>
+<div id="app">
+
+  <!-- ============ HEADER ============ -->
+  <div class="appheader">
+    <div class="topbar">
+      <div class="brand" onclick="location.href='index.html'">
+        <b><span class="only-ko">2026 서머캠프 — 섬과 다리</span><span class="only-en">Summer Camp 2026</span></b>
+        <span>Islands and Bridges · by Yellow Pen Club</span>
+      </div>
+      <div class="langtoggle">
+        <button class="lg" data-lang="ko">KO</button>
+        <button class="lg" data-lang="en">EN</button>
+      </div>
+    </div>
+    <nav class="pillnav">
+      <button class="pill" onclick="location.href='index.html#about'"><span class="only-ko">소개</span><span class="only-en">About</span></button>
+      <button class="pill" onclick="location.href='index.html#schedule'"><span class="only-ko">일정</span><span class="only-en">Schedule</span></button>
+      <button class="pill" onclick="location.href='index.html#program'"><span class="only-ko">프로그램</span><span class="only-en">Program</span></button>
+      <button class="pill" onclick="location.href='index.html#venue'"><span class="only-ko">장소</span><span class="only-en">Venue</span></button>
+      <button class="pill" onclick="location.href='index.html#info'"><span class="only-ko">안내</span><span class="only-en">Info</span></button>
+      <button class="pill active"><span class="only-ko">후기</span><span class="only-en">Notes</span></button>
+    </nav>
+    <div class="rule rule-bigdot" style="margin:0 7px;"></div>
+  </div>
+
+  <!-- ============ 서머캠프 후기 ============ -->
+  <section class="view">
+    <div class="sheet">
+      <div class="pagetitle"><span class="only-ko">서머캠프 후기</span><span class="only-en">Summer Camp Notes</span></div>
+
+      <div class="rule rule-dashdot"></div>
+
+      <p class="para"><span class="only-ko">서머 캠프에서 찍은 사진과 남기고 싶은 이야기를 올려주세요. 올려주신 후기는 이 페이지에 함께 모입니다. 가장 멋진 후기를 올려주신 세 분께 소정의 선물을 드립니다.😎</span><span class="only-en">Share a photo from Summer Camp and anything you would like to leave behind. Everything posted here gathers on this page. Three of the finest notes will receive a small gift from us. 😎</span></p>
+
+      <div id="rv-banner" class="rv-banner" hidden></div>
+
+      <!-- ---- compose ---- -->
+      <!-- required stays for semantics, but novalidate keeps the browser's
+           own popup from pre-empting the handler: it speaks the browser's
+           language rather than the one chosen here, and it leaves a stale
+           status line sitting underneath. -->
+      <form class="rv-form" id="rv-form" novalidate>
+        <div class="rv-row">
+          <div class="rv-label"><span class="only-ko">이름</span><span class="only-en">Name</span><span class="opt only-ko">필수</span><span class="opt only-en">required</span></div>
+          <input class="rv-input" type="text" id="rv-name" maxlength="20" required
+            data-ph-ko="이름을 남겨주세요" data-ph-en="Please leave your name">
+        </div>
+
+        <div class="rv-row">
+          <div class="rv-label"><span class="only-ko">사진 · 동영상</span><span class="only-en">Photos & videos</span><span class="opt only-ko">선택 · 최대 20개</span><span class="opt only-en">optional · up to 20</span></div>
+          <input class="rv-file" type="file" id="rv-file" accept="image/*,video/*" multiple>
+          <button class="rv-filebtn" type="button" id="rv-pick">
+            <span class="only-ko">사진 · 동영상 선택하기</span><span class="only-en">Choose photos or videos</span>
+          </button>
+          <div class="rv-note">
+            <span class="only-ko">한 번에 20개의 사진을 올릴 수 있습니다. 20개 이상의 사진은 나눠서 올려주세요.</span>
+            <span class="only-en">You can post up to 20 at a time. If you have more, please split them across separate posts.</span>
+          </div>
+          <div class="rv-thumbs" id="rv-thumbs"></div>
+        </div>
+
+        <div class="rv-row">
+          <div class="rv-label"><span class="only-ko">메시지</span><span class="only-en">Message</span><span class="opt only-ko">선택</span><span class="opt only-en">optional</span></div>
+          <textarea class="rv-textarea" id="rv-message" maxlength="4000"
+            data-ph-ko="서머 캠프에서 보고 듣고 나눈 이야기를 남겨주세요." data-ph-en="Leave a note about what you saw, heard, and shared."></textarea>
+          <div class="rv-count"><span id="rv-count">0</span>/4000</div>
+        </div>
+
+        <div class="rv-row">
+          <div class="rv-label"><span class="only-ko">공개 범위</span><span class="only-en">Visibility</span></div>
+          <div class="rv-seg" id="rv-vis">
+            <button type="button" class="rv-segbtn active" data-vis="public">
+              <span class="only-ko">모두에게 공개</span><span class="only-en">Public</span>
+            </button>
+            <button type="button" class="rv-segbtn" data-vis="private">
+              <span class="only-ko">운영진에게만</span><span class="only-en">Organisers only</span>
+            </button>
+          </div>
+          <div class="rv-seghint" id="rv-seghint"></div>
+        </div>
+
+        <button class="applybtn" type="submit" id="rv-submit">
+          <span class="only-ko">올리기</span><span class="only-en">Post</span>
+        </button>
+        <div class="rv-status" id="rv-status" hidden></div>
+      </form>
+
+      <div class="rule rule-pin" style="margin-top:20px;"></div>
+      <div class="sectlabel"><span class="only-ko">모두의 후기</span><span class="only-en">Everyone's Notes</span></div>
+      <div class="rule rule-linedot"></div>
+
+      <div id="rv-list"></div>
+
+      <div class="foot">
+        <div class="mk"><span class="only-ko">섬과 다리</span><span class="only-en">Islands and Bridges</span></div>
+        <div class="dt">2026. 8. 6. – 8. 9.</div>
+        <div class="host">by Yellow Pen Club</div>
+      </div>
+    </div>
+  </section>
+
+  <button class="totop" id="totop" aria-label="맨 위로 / To top"><svg viewBox="0 0 24 24"><polyline points="6 15 12 9 18 15"/></svg></button>
+</div>
+
+<div class="lb" id="lb" hidden>
+  <img class="lb-img" id="lb-img" alt="">
+  <video class="lb-img" id="lb-vid" controls playsinline hidden></video>
+  <button class="lb-btn lb-close" id="lb-close" aria-label="close">×</button>
+  <button class="lb-btn lb-prev"  id="lb-prev"  aria-label="previous">←</button>
+  <button class="lb-btn lb-next"  id="lb-next"  aria-label="next">→</button>
+  <div class="lb-count" id="lb-count"></div>
+</div>
+
+<script type="module">
+/* =========================================================
+   CONFIG — the Cloudflare Worker that stores posts and issues
+   upload URLs, e.g. 'https://summercamp-review.junghyun611.workers.dev'.
+   While this is empty the page runs in demo mode: posts are kept in
+   this browser's localStorage only, so the whole UI can be clicked
+   through before the Worker exists.
+   ========================================================= */
+const API_BASE = 'https://summercamp-review.junghyun611.workers.dev';
+
+const MAX_IMAGE_BYTES = 15 * 1024 * 1024;
+const MAX_VIDEO_BYTES = 100 * 1024 * 1024;
+const MAX_DIM         = 1600;             /* the feed copy is downscaled  */
+const JPEG_QUALITY    = 0.85;
+const PAGE_SIZE       = 60;
+const MAX_FILES       = 20;               /* photos/videos per post       */
+const MAX_MESSAGE     = 4000;
+
+/* ---------------- language ---------------- */
+let lang = 'ko';
+const T = {
+  posting:   {ko:'올리는 중…',                    en:'Posting…'},
+  posted:    {ko:'올렸습니다. 고맙습니다!',        en:'Posted — thank you!'},
+  needName:  {ko:'이름을 남겨주세요.', en:'Please leave your name.'},
+  needBody:  {ko:'사진이나 메시지를 하나 이상 채워주세요.', en:'Please add a photo or a message.'},
+  tooBig:    {ko:'사진 15MB · 동영상 100MB를 넘는 파일은 제외했습니다.',
+              en:'Files over 15MB (photos) or 100MB (videos) were skipped.'},
+  notImage:  {ko:'사진이나 동영상이 아닌 파일은 제외했습니다.', en:'Files that are not photos or videos were skipped.'},
+  tooMany:   {ko:`한 번에 최대 ${MAX_FILES}개까지 올릴 수 있습니다.`, en:`You can post up to ${MAX_FILES} at a time.`},
+  prepping:  {ko:'사진 준비 중…',                 en:'Preparing photos…'},
+  failed:    {ko:'올리지 못했습니다. 잠시 후 다시 시도해주세요.', en:'Could not post. Please try again in a moment.'},
+  loadFail:  {ko:'후기를 불러오지 못했습니다.',    en:'Could not load the notes.'},
+  loading:   {ko:'불러오는 중…',                  en:'Loading…'},
+  empty:     {ko:'아직 올라온 후기가 없습니다.\n첫 번째 후기를 남겨주세요!', en:'No notes yet.\nBe the first to leave one!'},
+  anon:      {ko:'익명',                          en:'Anonymous'},
+  hintPub:   {ko:'‘모두의 후기’에 올라가 누구나 볼 수 있습니다.',
+              en:'Appears in “Everyone’s Notes” for all to see.'},
+  hintPriv:  {ko:'‘모두의 후기’에 보이지 않습니다. 운영진만 확인할 수 있습니다.',
+              en:'Will not appear in “Everyone’s Notes”. Only the organisers can read it.'},
+  postedPriv:{ko:'운영진에게만 전달했습니다. 고맙습니다!', en:'Sent to the organisers only — thank you!'},
+  demo:      {ko:'데모 모드 — 서버 연결 전이라 올린 글이 이 브라우저에만 저장됩니다. 화면과 동작을 확인하는 용도입니다.',
+              en:'Demo mode — the server is not connected yet, so posts are stored only in this browser. Use it to check the layout and flow.'}
+};
+const t = o => o[lang] ?? o.ko;
+
+/* Shared with index.html, which is a separate document, so the choice
+   survives moving between them. */
+const LANG_KEY = 'sc-lang';
+function storedLang(){
+  try { const v = sessionStorage.getItem(LANG_KEY); return v === 'en' || v === 'ko' ? v : 'ko'; }
+  catch(e){ return 'ko'; }
+}
+function setLang(l){
+  lang = l;
+  try { sessionStorage.setItem(LANG_KEY, l); } catch(e){}
+  document.body.classList.toggle('lang-ko', l === 'ko');
+  document.body.classList.toggle('lang-en', l === 'en');
+  document.documentElement.lang = l;
+  document.querySelectorAll('.lg').forEach(b => b.classList.toggle('active', b.dataset.lang === l));
+  document.querySelectorAll('[data-ph-ko]').forEach(el => { el.placeholder = el.dataset['ph' + (l === 'ko' ? 'Ko' : 'En')]; });
+  if (!CONFIGURED) showBanner(t(T.demo));
+  renderVisibility();
+  renderList();
+}
+
+/* ---------------- backends ---------------- */
+/* Both expose the same two calls, so swapping in the Worker changes
+   nothing else on the page. */
+const CONFIGURED = !!API_BASE;
+
+function demoBackend(){
+  const KEY = 'summercamp-reviews-demo';
+  const read = () => { try { return JSON.parse(localStorage.getItem(KEY)) || []; } catch(e){ return []; } };
+  const toDataUrl = blob => new Promise(res => {
+    const r = new FileReader(); r.onload = () => res(r.result); r.readAsDataURL(blob);
+  });
+  return {
+    async list(){
+      return read().filter(p => p.isPublic !== false)
+                   .sort((a,b) => b.createdAt - a.createdAt)
+                   .slice(0, PAGE_SIZE).map(normalise);
+    },
+    async add({name, message, items, isPublic, onProgress}){
+      const images = [];
+      for (let i = 0; i < items.length; i++){
+        onProgress?.(i + 1, items.length);
+        const it = items[i];
+        images.push({
+          url: await toDataUrl(it.video ? it.file : it.display),
+          posterUrl: it.poster ? await toDataUrl(it.poster) : '',
+          type: it.video ? 'video' : 'image',
+          hasOrig: !it.video
+        });
+      }
+      const all = read();
+      all.push({id:String(Date.now()), name, message, images, isPublic, createdAt:Date.now()});
+      localStorage.setItem(KEY, JSON.stringify(all));
+    }
+  };
+}
+
+/* Posts written before multi-photo support carry a single imageUrl. */
+function normalise(v){
+  /* A private post's photos carry a key but no url until an admin
+     resolves a signed one, so keep entries that have either. */
+  const images = (Array.isArray(v.images) ? v.images : [])
+    .filter(im => im && (im.url || im.key));
+  return {
+    id: v.id,
+    name: v.name || '',
+    message: v.message || '',
+    images,
+    isPublic: v.isPublic !== false,
+    createdAt: v.createdAt
+  };
+}
+
+function workerBackend(){
+  const api = API_BASE.replace(/\/$/, '');
+  return {
+    async list(){
+      /* Only public posts are ever sent over this endpoint — the Worker
+         does the filtering, so private ones are not merely hidden here. */
+      const res = await fetch(`${api}/posts`);
+      if (!res.ok) throw new Error(`list ${res.status}`);
+      const {items} = await res.json();
+      return (items || []).map(normalise);
+    },
+    /* The Worker signs a one-off URL and the bytes go straight to R2, so
+       nothing large passes through the Worker itself. */
+    async put(blob, {contentType, isPublic, kind, ext}){
+      const sres = await fetch(`${api}/presign`, {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({contentType, isPublic, kind, ext})
+      });
+      if (!sres.ok) throw new Error(`presign ${sres.status}`);
+      const {uploadUrl, key} = await sres.json();
+
+      const put = await fetch(uploadUrl, {
+        method:'PUT', body: blob, headers:{'Content-Type':contentType}
+      });
+      if (!put.ok) throw new Error(`upload ${put.status}`);
+      return key;
+    },
+
+    async add({name, message, items, isPublic, onProgress}){
+      const images = [];
+      for (let i = 0; i < items.length; i++){
+        onProgress?.(i + 1, items.length);
+        const it = items[i];
+
+        if (it.video){
+          /* A video is served as it was filmed — there is no practical way
+             to transcode one in the browser, so it is its own original. */
+          const key = await this.put(it.file, {
+            contentType: it.file.type, isPublic, kind:'display', ext: extOf(it.file)
+          });
+          /* The still rides alongside the video so the feed can show a
+             thumbnail without downloading any of it. */
+          const poster = it.poster ? await this.put(it.poster, {
+            contentType:'image/jpeg', isPublic, kind:'display', ext:'jpg'
+          }) : '';
+          images.push({key, orig:'', poster, type:'video'});
+        } else {
+          const key = await this.put(it.display, {
+            contentType:'image/jpeg', isPublic, kind:'display', ext:'jpg'
+          });
+          /* Originals are archived whatever the post's visibility, so the
+             feed can stay light without the full-size photo being lost. */
+          const orig = await this.put(it.file, {
+            contentType: it.file.type || 'application/octet-stream',
+            isPublic, kind:'original', ext: extOf(it.file)
+          });
+          images.push({key, orig, type:'image'});
+        }
+      }
+
+      const res = await fetch(`${api}/posts`, {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({name, message, isPublic, images})
+      });
+      if (!res.ok) throw new Error(`post ${res.status}`);
+    }
+  };
+}
+
+/* ---------------- image handling ---------------- */
+/* Phone photos are 3–5MB each; downscaling in the browser keeps the
+   Firebase Storage bill and the visitor's upload time both small. */
+function extOf(file){
+  const m = /\.([a-z0-9]{1,5})$/i.exec(file.name || '');
+  if (m) return m[1].toLowerCase();
+  const sub = (file.type || '').split('/')[1] || '';
+  return /^[a-z0-9]{1,5}$/i.test(sub) ? sub.toLowerCase() : '';
+}
+
+/* Grab a still from the start of a video to use as its thumbnail. Without
+   one the feed has to pull video data just to paint a frame, and several
+   browsers show nothing but a black box anyway. Returns null if the
+   browser cannot decode the file — the feed falls back to a media
+   fragment in that case. */
+function videoPoster(file){
+  return new Promise(resolve => {
+    const v = document.createElement('video');
+    const url = URL.createObjectURL(file);
+    let settled = false;
+    const finish = blob => {
+      if (settled) return;
+      settled = true;
+      URL.revokeObjectURL(url);
+      resolve(blob);
+    };
+
+    v.muted = true; v.playsInline = true; v.preload = 'metadata';
+    v.onloadeddata = () => {
+      try { v.currentTime = Math.min(0.1, (v.duration || 1) / 2); }
+      catch (e){ finish(null); }
+    };
+    v.onseeked = () => {
+      try {
+        const scale = Math.min(1, MAX_DIM / Math.max(v.videoWidth, v.videoHeight));
+        const c = document.createElement('canvas');
+        c.width  = Math.round(v.videoWidth  * scale);
+        c.height = Math.round(v.videoHeight * scale);
+        c.getContext('2d').drawImage(v, 0, 0, c.width, c.height);
+        c.toBlob(finish, 'image/jpeg', JPEG_QUALITY);
+      } catch (e){ finish(null); }
+    };
+    v.onerror = () => finish(null);
+    /* A codec the browser will not decode must not hold up the post. */
+    setTimeout(() => finish(null), 8000);
+    v.src = url;
+  });
+}
+
+async function compressImage(file){
+  const bitmap = await createImageBitmap(file, {imageOrientation:'from-image'});
+  const scale  = Math.min(1, MAX_DIM / Math.max(bitmap.width, bitmap.height));
+  const w = Math.round(bitmap.width * scale), h = Math.round(bitmap.height * scale);
+  const canvas = document.createElement('canvas');
+  canvas.width = w; canvas.height = h;
+  canvas.getContext('2d').drawImage(bitmap, 0, 0, w, h);
+  bitmap.close?.();
+  return new Promise(res => canvas.toBlob(res, 'image/jpeg', JPEG_QUALITY));
+}
+
+/* ---------------- rendering ---------------- */
+const esc = s => String(s).replace(/[&<>"']/g, c =>
+  ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+function relTime(ms){
+  const sec = (Date.now() - ms) / 1000, ko = lang === 'ko';
+  if (sec < 60) return ko ? '방금 전' : 'just now';
+  const m = Math.floor(sec / 60); if (m < 60)  return ko ? `${m}분 전`   : `${m}m ago`;
+  const h = Math.floor(m / 60);   if (h < 24)  return ko ? `${h}시간 전` : `${h}h ago`;
+  const d = Math.floor(h / 24);   if (d < 7)   return ko ? `${d}일 전`   : `${d}d ago`;
+  return new Date(ms).toLocaleDateString(ko ? 'ko-KR' : 'en-US', {month:'numeric', day:'numeric'});
+}
+
+let posts = [];
+let listState = 'loading';   /* loading | ready | error */
+
+function renderList(){
+  const el = document.getElementById('rv-list');
+  if (listState === 'loading'){ el.innerHTML = `<div class="rv-empty">${esc(t(T.loading))}</div>`; return; }
+  if (listState === 'error'){   el.innerHTML = `<div class="rv-empty">${esc(t(T.loadFail))}</div>`; return; }
+  if (!posts.length){           el.innerHTML = `<div class="rv-empty">${esc(t(T.empty))}</div>`; return; }
+
+  el.innerHTML = posts.map((p, i) => `
+    ${i ? '<div class="rule"></div>' : ''}
+    <div class="rv-post">
+      ${p.images.length ? `<div class="rv-shots${p.images.length > 1 ? ' multi' : ''}">${
+        /* Kept as real links so right-click and middle-click still open the
+           full photo; the click handler takes over for the lightbox. */
+        p.images.map((im, j) =>
+          `<a class="rv-shot" href="${esc(im.url)}" data-p="${i}" data-i="${j}">
+             ${im.type === 'video'
+               /* With a still there is no reason to touch the video here.
+                  Without one — anything posted before posters existed —
+                  #t=0.1 nudges the browser into painting a frame, which
+                  preload alone does not do on several of them. */
+               ? (im.posterUrl
+                   ? `<video src="${esc(im.url)}" poster="${esc(im.posterUrl)}" muted playsinline preload="none"></video>`
+                   : `<video src="${esc(im.url)}#t=0.1" muted playsinline preload="metadata"></video>`
+                 ) + `<span class="rv-play">▶</span>`
+               : `<img src="${esc(im.url)}" alt="" loading="lazy">`}
+           </a>`).join('')
+      }</div>` : ''}
+      ${p.message  ? `<div class="rv-body">${esc(p.message)}</div>` : ''}
+      <div class="rv-meta">
+        <span class="rv-who">${esc(p.name || t(T.anon))}</span>
+        <span class="rv-when">${esc(relTime(p.createdAt))}</span>
+      </div>
+    </div>`).join('');
+}
+
+/* ---------------- lightbox ---------------- */
+const $id = id => document.getElementById(id);
+const lb = $id('lb'), lbImg = $id('lb-img'), lbVid = $id('lb-vid'), lbCount = $id('lb-count');
+const lbPrev = $id('lb-prev'), lbNext = $id('lb-next');
+let lbShots = [], lbAt = 0;
+
+function lbPaint(){
+  const shot = lbShots[lbAt];
+  const video = shot.type === 'video';
+
+  /* Whichever is not on screen is emptied, so a video does not keep
+     playing after moving on to the next photo. */
+  lbVid.pause();
+  lbVid.hidden = !video;
+  lbImg.hidden = video;
+  if (video){ lbVid.src = shot.url; lbImg.removeAttribute('src'); }
+  else      { lbImg.src = shot.url; lbVid.removeAttribute('src'); }
+
+  lbCount.textContent = `${lbAt + 1} / ${lbShots.length}`;
+  const many = lbShots.length > 1;
+  lbPrev.hidden = lbNext.hidden = lbCount.hidden = !many;
+}
+function lbOpen(shots, at){
+  lbShots = shots; lbAt = at;
+  lbPaint();
+  lb.hidden = false;
+  document.body.classList.add('lb-open');
+}
+function lbClose(){
+  lb.hidden = true;
+  document.body.classList.remove('lb-open');
+  lbVid.pause();
+  lbImg.removeAttribute('src');   /* stop the download if it is still going */
+  lbVid.removeAttribute('src');
+}
+function lbStep(d){
+  lbAt = (lbAt + d + lbShots.length) % lbShots.length;
+  lbPaint();
+}
+
+$id('rv-list').addEventListener('click', e => {
+  const a = e.target.closest('.rv-shot');
+  if (!a) return;
+  const post = posts[Number(a.dataset.p)];
+  if (!post) return;
+  e.preventDefault();
+  lbOpen(post.images.map(im => ({url: im.url, type: im.type})), Number(a.dataset.i));
+});
+
+$id('lb-close').onclick = lbClose;
+lbPrev.onclick = () => lbStep(-1);
+lbNext.onclick = () => lbStep(1);
+/* Only a click on the backdrop itself closes — not one that lands on the
+   photo or a button sitting on top of it. */
+lb.addEventListener('click', e => { if (e.target === lb) lbClose(); });
+document.addEventListener('keydown', e => {
+  if (lb.hidden) return;
+  if (e.key === 'Escape')     lbClose();
+  if (e.key === 'ArrowLeft')  lbStep(-1);
+  if (e.key === 'ArrowRight') lbStep(1);
+});
+
+/* Swiping is how a phone expects to move through photos. */
+let touchX = null;
+lb.addEventListener('touchstart', e => {
+  /* Not while dragging a video's scrubber. */
+  touchX = e.target.closest('#lb-vid') ? null : e.changedTouches[0].clientX;
+}, {passive:true});
+lb.addEventListener('touchend', e => {
+  if (touchX === null || lbShots.length < 2) return;
+  const dx = e.changedTouches[0].clientX - touchX;
+  if (Math.abs(dx) > 45) lbStep(dx < 0 ? 1 : -1);
+  touchX = null;
+}, {passive:true});
+
+function showBanner(text){
+  const b = document.getElementById('rv-banner');
+  b.textContent = text; b.hidden = false;
+}
+function showStatus(text, isError){
+  const s = document.getElementById('rv-status');
+  s.textContent = text; s.hidden = false;
+  s.classList.toggle('err', !!isError);
+}
+function clearStatus(){ document.getElementById('rv-status').hidden = true; }
+
+/* ---------------- wiring ---------------- */
+const backend = CONFIGURED ? workerBackend() : demoBackend();
+
+const fileInput = document.getElementById('rv-file');
+const thumbsEl  = document.getElementById('rv-thumbs');
+const messageEl = document.getElementById('rv-message');
+const nameEl    = document.getElementById('rv-name');
+const submitEl  = document.getElementById('rv-submit');
+
+/* {id, file, url} — url is an object URL held until the thumb goes away.
+   Thumbs are keyed by id, not by position, so a click landing on a stale
+   button (two removals before a repaint) drops the right photo or none. */
+let picked = [];
+let pickSeq = 0;
+
+document.getElementById('rv-pick').onclick = () => fileInput.click();
+
+/* Successive picks add to the selection rather than replacing it, so a
+   visitor can pull photos from several albums into one post. */
+fileInput.onchange = () => {
+  const chosen = Array.from(fileInput.files);
+  fileInput.value = '';               /* let the same file be re-picked */
+  if (!chosen.length) return;
+
+  const skipped = [];
+  for (const f of chosen){
+    const video = f.type.startsWith('video/');
+    const image = f.type.startsWith('image/');
+    if (!video && !image){ skipped.push(T.notImage); continue; }
+    if (f.size > (video ? MAX_VIDEO_BYTES : MAX_IMAGE_BYTES)){ skipped.push(T.tooBig); continue; }
+    if (picked.length >= MAX_FILES){ skipped.push(T.tooMany); break; }
+    picked.push({id:++pickSeq, file:f, video, url:URL.createObjectURL(f)});
+  }
+  renderThumbs();
+
+  const uniq = [...new Set(skipped)];
+  if (uniq.length) showStatus(uniq.map(t).join(' '), true);
+  else clearStatus();
+};
+
+function renderThumbs(){
+  thumbsEl.innerHTML = picked.map(p => `
+    <div class="rv-thumb">
+      ${p.video ? `<video src="${p.url}#t=0.1" muted playsinline preload="metadata"></video>`
+                : `<img src="${p.url}" alt="">`}
+      <button type="button" data-id="${p.id}" aria-label="remove">×</button>
+    </div>`).join('');
+  thumbsEl.querySelectorAll('button').forEach(b => {
+    b.onclick = () => {
+      const id = Number(b.dataset.id);
+      const i  = picked.findIndex(p => p.id === id);
+      if (i < 0) return;
+      URL.revokeObjectURL(picked[i].url);
+      picked.splice(i, 1);
+      renderThumbs();
+    };
+  });
+}
+
+function clearPicked(){
+  picked.forEach(p => URL.revokeObjectURL(p.url));
+  picked = [];
+  renderThumbs();
+}
+
+messageEl.oninput = () => { document.getElementById('rv-count').textContent = messageEl.value.length; };
+
+let isPublic = true;
+const hintEl = document.getElementById('rv-seghint');
+function renderVisibility(){
+  document.querySelectorAll('.rv-segbtn').forEach(b =>
+    b.classList.toggle('active', (b.dataset.vis === 'public') === isPublic));
+  hintEl.textContent = t(isPublic ? T.hintPub : T.hintPriv);
+}
+document.querySelectorAll('.rv-segbtn').forEach(b => {
+  b.onclick = () => { isPublic = b.dataset.vis === 'public'; renderVisibility(); };
+});
+
+document.getElementById('rv-form').onsubmit = async (e) => {
+  e.preventDefault();
+  const message = messageEl.value.trim().slice(0, MAX_MESSAGE);
+  const name    = nameEl.value.trim();
+  if (!name){ showStatus(t(T.needName), true); nameEl.focus(); return; }
+  if (!message && !picked.length){ showStatus(t(T.needBody), true); return; }
+
+  submitEl.disabled = true;
+  showStatus(t(picked.length ? T.prepping : T.posting));
+  try {
+    /* Only the feed copy is downscaled; p.file stays the untouched original. */
+    const items = [];
+    for (const p of picked){
+      items.push({
+        file: p.file,
+        video: p.video,
+        display: p.video ? null : await compressImage(p.file),
+        poster: p.video ? await videoPoster(p.file) : null
+      });
+    }
+
+    const wasPublic = isPublic;
+    await backend.add({
+      name, message, items, isPublic,
+      onProgress: (n, total) => showStatus(total > 1 ? `${t(T.posting)} ${n}/${total}` : t(T.posting))
+    });
+
+    messageEl.value = ''; nameEl.value = '';
+    document.getElementById('rv-count').textContent = '0';
+    clearPicked();
+    isPublic = true; renderVisibility();
+    showStatus(t(wasPublic ? T.posted : T.postedPriv));
+    await load();
+  } catch (err){
+    console.error(err);
+    /* The step and status code ride along, so a report of "it failed" can
+       be acted on without asking anyone to open the console. */
+    showStatus(`${t(T.failed)} (${err.message})`, true);
+  } finally {
+    submitEl.disabled = false;
+  }
+};
+
+async function load(){
+  try {
+    posts = await backend.list();
+    listState = 'ready';
+  } catch (err){
+    console.error(err);
+    listState = 'error';
+  }
+  renderList();
+}
+
+document.querySelectorAll('.lg').forEach(b => b.onclick = () => setLang(b.dataset.lang));
+const totop = document.getElementById('totop');
+totop.onclick = () => window.scrollTo({top:0, behavior:'smooth'});
+window.addEventListener('scroll', () => totop.classList.toggle('show', window.scrollY > 320), {passive:true});
+
+setLang(storedLang());
+load();
+</script>
+</body>
+</html>
